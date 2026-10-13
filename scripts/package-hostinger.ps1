@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $releasePath = Join-Path $projectRoot 'artifacts/hostinger-source.zip'
-$sourceNames = @('.env.example', '.gitignore', 'AGENTS.md', 'README.md', 'package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'eslint.config.mjs', 'playwright.config.ts', 'vitest.config.ts', '.github', 'config', 'src', 'public', 'supabase', 'scripts', 'docs', 'tests')
+$sourceNames = @('.env.example', '.gitignore', '.gitattributes', 'AGENTS.md', 'README.md', 'package.json', 'package-lock.json', 'next.config.ts', 'tsconfig.json', 'eslint.config.mjs', 'playwright.config.ts', 'vitest.config.ts', '.github', 'config', 'src', 'public', 'supabase', 'scripts', 'docs', 'tests')
 $publicConfig = Get-Content -LiteralPath (Join-Path $projectRoot 'config/hostinger-public.json') -Raw | ConvertFrom-Json
 $allowedNames = @('NEXT_PUBLIC_SITE_URL', 'NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'LOCAL_DEMO')
 if (@($publicConfig.PSObject.Properties).Count -ne $allowedNames.Count) { throw 'Release configuration must contain exactly the four public deployment settings' }

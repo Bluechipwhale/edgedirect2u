@@ -26,7 +26,7 @@ Release signing uses four encrypted repository Actions secrets: `ANDROID_KEYSTOR
 
 ## Windows installer
 
-`native/windows` builds a self-contained .NET 10 Windows x64 app using Microsoft WebView2. Its per-user installer creates Start menu/Desktop shortcuts and installs WebView2 when necessary. It offers Store and Admin navigation, a local browser profile and a reconnect screen. Uninstall removes the app and its browser profile. Store/Paystack navigation stays within the browser engine; other user-selected HTTPS links open the system browser. No native host-object or message bridge is enabled.
+`native/windows` builds a self-contained .NET 10 Windows x64 app using Microsoft WebView2. Its per-user installer creates Start menu/Desktop shortcuts and installs WebView2 when necessary. It offers Store and Admin navigation, a local browser profile and a reconnect screen. Uninstall removes only the installed application files and shortcuts; it preserves the browser profile and unrelated files in the chosen folder. Store/Paystack navigation stays within the browser engine; other user-selected HTTPS links open the system browser. No native host-object or message bridge is enabled.
 
 No Windows code-signing certificate was provided, so the installer is unsigned. The release page includes SHA-256 checksums. Signed Android installation is available directly; neither app has been submitted to Google Play or Microsoft Store. Device installation and real hosted payment/driver acceptance still need business commissioning.
 

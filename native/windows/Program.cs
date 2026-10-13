@@ -39,9 +39,10 @@ internal sealed class StoreWindow : Form {
             var settings=browser.CoreWebView2.Settings;settings.AreDevToolsEnabled=false;settings.IsWebMessageEnabled=false;settings.AreHostObjectsAllowed=false;settings.IsStatusBarEnabled=false;settings.UserAgent+=" Edgedirect2uNative/windows";
             browser.CoreWebView2.PermissionRequested+=(_,e)=>e.State=CoreWebView2PermissionState.Deny;
             browser.CoreWebView2.ServerCertificateErrorDetected+=(_,e)=>e.Action=CoreWebView2ServerCertificateErrorAction.Cancel;
-            browser.CoreWebView2.NavigationStarting+=(_,e)=>{if(e.Uri=="about:blank")return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host=="edgedirect2u.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
+            browser.CoreWebView2.NavigationStarting+=(_,e)=>{SmokeLog("Navigation starting "+e.NavigationId+": "+e.Uri);if(e.Uri=="about:blank")return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host=="edgedirect2u.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
             browser.CoreWebView2.NewWindowRequested+=(_,e)=>{e.Handled=true;if(InApp(e.Uri))browser.CoreWebView2.Navigate(e.Uri);else if(e.IsUserInitiated)External(e.Uri);};
             browser.CoreWebView2.NavigationCompleted+=async(_,e)=>{
+                if(e.WebErrorStatus==CoreWebView2WebErrorStatus.OperationCanceled){SmokeLog("Superseded navigation "+e.NavigationId);return;}
                 if(smoke){try{SmokeLog("Navigation: "+e.IsSuccess+" "+e.WebErrorStatus);if(!e.IsSuccess){Environment.ExitCode=1;Close();return;}var index=Array.IndexOf(arguments,"--screenshot");if(index>=0&&index+1<arguments.Length){using var stream=File.Create(arguments[index+1]);await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);SmokeLog("Captured "+stream.Length+" bytes");}Close();}catch(Exception error){SmokeLog(error.ToString());Environment.ExitCode=1;Close();}return;}
                 if(!e.IsSuccess)browser.CoreWebView2.NavigateToString(OfflinePage);
             };

@@ -2,6 +2,8 @@
 
 A responsive ecommerce marketplace built with Next.js 16, React 19, TypeScript, Supabase PostgreSQL/Auth/Storage and Paystack. The storefront, administration, Theme Studio, inventory reservations, merchant allocations and delivery workflow share one application.
 
+**Owner setup:** [Start here](docs/START-HERE.md) for Hostinger's GitHub connection, administrator sign-in, product uploads and app installation.
+
 ## Run locally
 
 Use Node 24 and npm. From the repository root:

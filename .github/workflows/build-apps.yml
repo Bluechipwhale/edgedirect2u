@@ -26,7 +26,8 @@ jobs:
           echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Prepare Android SDK
         run: |
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64" "emulator"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
       - name: Restore private signing key
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
