@@ -70,9 +70,9 @@ jobs:
         run: |
           sudo chmod a+rw /dev/kvm
           echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeSmoke --package "system-images;android-35;google_apis;x86_64" --force
-          "$ANDROID_HOME/emulator/emulator" -avd EdgeSmoke -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd EdgeSmoke -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader -memory 2048 > "$RUNNER_TEMP/emulator.log" 2>&1 &
           trap 'adb -s emulator-5554 emu kill || true' EXIT
-          adb -s emulator-5554 wait-for-device
+          timeout 120s adb -s emulator-5554 wait-for-device || { tail -60 "$RUNNER_TEMP/emulator.log"; exit 1; }
           ready=false
           for attempt in $(seq 1 120); do
             if [ "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then ready=true; break; fi
@@ -83,9 +83,28 @@ jobs:
           adb -s emulator-5554 shell settings put global transition_animation_scale 0
           adb -s emulator-5554 install -r artifacts/native/Edgedirect2u-Store.apk
           adb -s emulator-5554 shell am start -W -n com.edgedirect2u.store/com.edgedirect2u.shell.MainActivity
+          sleep 3
+          adb -s emulator-5554 shell pidof com.edgedirect2u.store
+          adb -s emulator-5554 exec-out screencap -p > artifacts/native/android-store-smoke.png
           adb -s emulator-5554 install -r artifacts/native/Edgedirect2u-Driver.apk
           adb -s emulator-5554 shell am start -W -n com.edgedirect2u.driver/com.edgedirect2u.shell.MainActivity
+          sleep 3
+          adb -s emulator-5554 shell pidof com.edgedirect2u.driver
+          adb -s emulator-5554 exec-out screencap -p > artifacts/native/android-driver-smoke.png
           gradle --no-daemon -p native/android connectedStoreDebugAndroidTest connectedDriverDebugAndroidTest
+      - name: Preserve emulator diagnostics
+        if: always()
+        run: |
+          mkdir -p artifacts/native
+          if [ -f "$RUNNER_TEMP/emulator.log" ]; then cp "$RUNNER_TEMP/emulator.log" artifacts/native/emulator.log; fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: android-launch-preview
+          path: |
+            artifacts/native/*.png
+            artifacts/native/emulator.log
+            native/android/app/build/reports/androidTests/
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: android-apps

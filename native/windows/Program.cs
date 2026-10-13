@@ -10,6 +10,7 @@ internal static class Program {
 }
 internal sealed class StoreWindow : Form {
     private const string Home="https://edgedirect2u.com";
+    private static readonly string OfflineUri="data:text/html;charset=utf-8;base64,"+Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(OfflinePage));
     private readonly WebView2 browser=new(){Dock=DockStyle.Fill};
     private readonly Label location=new(){Text="EDGEDIRECT2U · YOUR EVERYDAY, WITH AN EDGE",AutoSize=true,ForeColor=Color.FromArgb(91,91,112),Margin=new Padding(18,14,0,0)};
     private readonly string[] arguments;
@@ -39,7 +40,7 @@ internal sealed class StoreWindow : Form {
             var settings=browser.CoreWebView2.Settings;settings.AreDevToolsEnabled=false;settings.IsWebMessageEnabled=false;settings.AreHostObjectsAllowed=false;settings.IsStatusBarEnabled=false;settings.UserAgent+=" Edgedirect2uNative/windows";
             browser.CoreWebView2.PermissionRequested+=(_,e)=>e.State=CoreWebView2PermissionState.Deny;
             browser.CoreWebView2.ServerCertificateErrorDetected+=(_,e)=>e.Action=CoreWebView2ServerCertificateErrorAction.Cancel;
-            browser.CoreWebView2.NavigationStarting+=(_,e)=>{SmokeLog("Navigation starting "+e.NavigationId+": "+e.Uri);if(e.Uri=="about:blank")return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host=="edgedirect2u.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
+            browser.CoreWebView2.NavigationStarting+=(_,e)=>{SmokeLog("Navigation starting "+e.NavigationId+": "+(e.Uri==OfflineUri?"bundled reconnect screen":e.Uri));if(e.Uri=="about:blank"||e.Uri==OfflineUri)return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host=="edgedirect2u.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
             browser.CoreWebView2.NewWindowRequested+=(_,e)=>{e.Handled=true;if(InApp(e.Uri))browser.CoreWebView2.Navigate(e.Uri);else if(e.IsUserInitiated)External(e.Uri);};
             browser.CoreWebView2.NavigationCompleted+=async(_,e)=>{
                 if(e.WebErrorStatus==CoreWebView2WebErrorStatus.OperationCanceled){SmokeLog("Superseded navigation "+e.NavigationId);return;}
