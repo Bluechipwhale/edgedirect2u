@@ -46,6 +46,8 @@ The 50 business/provider/PostgreSQL/storage/auth tests execute all migrations an
 
 ## Guides
 
+- [Web app, Android APKs, Windows installer and administrator access](docs/APPS.md)
+
 Deploy this repository from Hostinger's GitHub integration using the `main` branch, Next.js, Node 24, install `npm ci --include=dev`, build `npm run build:hostinger`, and start `node --use-system-ca .next/standalone/server.js`. The build prepares public Supabase/domain defaults from `config/hostinger-public.json`. Private service/payment keys remain host environment settings. See the Hostinger guide for domain, authentication and acceptance checks.
 
 - [Connected project and remaining launch steps](docs/LAUNCH.md)
@@ -63,4 +65,4 @@ Deploy this repository from Hostinger's GitHub integration using the `main` bran
 
 ## Launch status
 
-The supplied Supabase project is connected, eight migrations are applied, and reservation expiry is scheduled inside Supabase. The owner confirmed Hostinger and `https://edgedirect2u.com`; the app has not been deployed or connected to Paystack. The confirmed account `olasodechukwudi@gmail.com` now has administrator access. The Hostinger ZIP includes public production configuration for the connected database; server service/payment keys, hosting access, actual product data and business acceptance are still required. See the connected-project handoff before taking live orders. Advanced warehouse transfers, automated payouts, notification delivery, dark appearance and merchant staff workflows are outside this release; details are explicit in the status guide.
+The supplied Supabase project is connected, eight migrations are applied, and reservation expiry is scheduled inside Supabase. The owner confirmed Hostinger and `https://edgedirect2u.com`; the app has not been deployed or connected to Paystack by this agent. The confirmed account `olasodechukwudi@gmail.com` has administrator access, with role-specific sign-in destinations. Store/driver web installation, Android client sources and the Windows store launcher share the hosted application; see `docs/APPS.md` for release builds and access. The Hostinger build includes public production configuration for the connected database. Checkout still needs server/payment keys, actual product data and business acceptance. Advanced warehouse transfers, automated payouts, notification delivery, dark appearance and merchant staff workflows are outside this release; details are explicit in the status guide.

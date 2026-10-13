@@ -5,3 +5,5 @@
 *.jpeg binary
 *.webp binary
 *.ico binary
+# Applied migration checksums cover exact bytes, including historical line endings.
+supabase/migrations/*.sql -text

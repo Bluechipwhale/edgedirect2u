@@ -30,6 +30,8 @@ export async function POST(req: Request) {
       ? await db.auth.signUp({ email: input.email, password: input.password, options: { emailRedirectTo: `${origin}/auth/confirm` } })
       : await db.auth.signInWithPassword({ email: input.email, password: input.password });
     if (result.error) throw new Error(input.action === 'login' ? 'Unable to sign in. Check your email and password, or confirm your email first.' : result.error.message);
-    return NextResponse.json({ ok: true, confirmation: !result.data.session });
+    let redirect='/account';
+    if(result.data.session&&result.data.user){const {data:profile}=await db.from('profiles').select('role').eq('id',result.data.user.id).single();redirect=profile?.role==='admin'||profile?.role==='operations'?'/admin':profile?.role==='driver'?'/driver':profile?.role==='merchant'?'/merchant':'/account';}
+    return NextResponse.json({ ok: true, confirmation: !result.data.session, redirect });
   } catch (error) { return failure(error); }
 }

@@ -45,3 +45,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+/native/**/build/
+/native/**/.gradle/
+/native/**/bin/
+/native/**/obj/
+/native/**/publish/
+/native/android/local.properties
+/native/windows/MicrosoftEdgeWebview2Setup.exe
+*.jks
+*.keystore
+*.p12
+*.key
+*.apk
+*.aab

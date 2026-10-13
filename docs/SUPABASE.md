@@ -56,3 +56,4 @@ Before launch, verify PostgreSQL and asset backups and restoration. Add forward 
 ## Verified TLS deployment tools
 
 For this connected project, the owner supplied a database URL and CA certificate. Store them in ignored `.env.local` as `DATABASE_URL` (URL-encode the password) and `DATABASE_CA_PATH`. Run `npm run db:plan` before `npm run db:migrate`; the latter applies forward migrations transactionally under a deployment lock and tracks immutable checksums. Existing untracked schemas are rejected for manual reconciliation. The tool never runs development seed data. Follow `LAUNCH.md` for the connected project, administrator bootstrap and database-side reservation scheduler.
+Applied migration files retain their original bytes in Git (`-text` attribute), including historical CRLF endings in the first four migrations. Do not reformat them: the deployment ledger verifies exact SHA-256 checksums. Add new forward migrations instead.

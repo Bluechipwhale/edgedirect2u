@@ -1,0 +1,4 @@
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+export function AdminGettingStarted(){const path=usePathname();if(path!=='/admin')return null;return <nav className="admin-start" aria-label="Start uploading"><Link href="/admin/products"><span className="purple">01</span><div><strong>Add your first products</strong><small>Choose a category, upload a photo and enter a price in naira.</small></div></Link><Link href="/admin/inventory"><span className="purple">02</span><div><strong>Receive your stock</strong><small>Add actual units with an audited inventory adjustment.</small></div></Link><Link href="/admin/theme"><span className="purple">03</span><div><strong>Make the store yours</strong><small>Publish your logo, colours and homepage content.</small></div></Link></nav>;}

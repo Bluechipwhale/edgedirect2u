@@ -1,0 +1,54 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'com.edgedirect2u.shell'
+    compileSdk 36
+    defaultConfig {
+        minSdk 26
+        targetSdk 36
+        versionCode 1
+        versionName '1.0.0'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    buildFeatures { buildConfig true }
+    flavorDimensions 'workspace'
+    productFlavors {
+        store {
+            dimension 'workspace'
+            applicationId 'com.edgedirect2u.store'
+            resValue 'string', 'app_name', 'Edgedirect2u Store'
+            buildConfigField 'String', 'START_PATH', '"/"'
+            manifestPlaceholders = [appLinkPath:'/checkout/confirmation']
+        }
+        driver {
+            dimension 'workspace'
+            applicationId 'com.edgedirect2u.driver'
+            resValue 'string', 'app_name', 'Edge Driver'
+            buildConfigField 'String', 'START_PATH', '"/driver"'
+            manifestPlaceholders = [appLinkPath:'/driver']
+        }
+    }
+    signingConfigs {
+        distribution {
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) {
+                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH'))
+                storeType 'PKCS12'
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug { applicationIdSuffix '.debug' }
+        release {
+            signingConfig signingConfigs.distribution
+            minifyEnabled false
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+}

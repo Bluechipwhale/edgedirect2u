@@ -1,0 +1,71 @@
+package com.edgedirect2u.shell;
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Color;
+import android.net.Uri;
+import android.net.http.SslError;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.Gravity;
+import android.view.View;
+import android.view.WindowInsets;
+import android.webkit.CookieManager;
+import android.webkit.SslErrorHandler;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.ValueCallback;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+public final class MainActivity extends Activity {
+    private WebView browser;
+    private ProgressBar progress;
+    private LinearLayout errorPanel;
+    private String lastInternalUrl="https://edgedirect2u.com"+BuildConfig.START_PATH;
+    private ValueCallback<Uri[]> photoCallback;
+    @Override public void onCreate(Bundle state) {
+        super.onCreate(state);
+        LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(248,248,252));
+        root.setOnApplyWindowInsetsListener((view,insets)->{if(Build.VERSION.SDK_INT>=30){android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars()|WindowInsets.Type.ime());view.setPadding(bars.left,bars.top,bars.right,bars.bottom);}else view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
+        progress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);progress.setMax(100);root.addView(progress,new LinearLayout.LayoutParams(-1,6));
+        browser=new WebView(this);browser.setId(View.generateViewId());root.addView(browser,new LinearLayout.LayoutParams(-1,0,1));
+        errorPanel=new LinearLayout(this);errorPanel.setOrientation(LinearLayout.VERTICAL);errorPanel.setGravity(Gravity.CENTER);errorPanel.setPadding(32,32,32,32);errorPanel.setVisibility(View.GONE);root.addView(errorPanel,new LinearLayout.LayoutParams(-1,0,1));
+        TextView title=new TextView(this);title.setText("A little pause.");title.setTextSize(30);title.setTextColor(Color.rgb(24,24,43));errorPanel.addView(title);
+        TextView body=new TextView(this);body.setText("Your workspace needs a secure internet connection. Reconnect and check your latest order or delivery status before retrying an update.");body.setTextSize(16);body.setPadding(0,24,0,24);body.setGravity(Gravity.CENTER);errorPanel.addView(body);
+        Button retry=new Button(this);retry.setText("Reconnect");retry.setOnClickListener(view->{showBrowser();browser.loadUrl(lastInternalUrl);});errorPanel.addView(retry);
+        setContentView(root);
+        WebSettings settings=browser.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setCacheMode(WebSettings.LOAD_NO_CACHE);settings.setSupportMultipleWindows(false);settings.setUserAgentString(settings.getUserAgentString()+" Edgedirect2uNative/"+BuildConfig.FLAVOR);
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(browser,false);
+        browser.setWebChromeClient(new WebChromeClient(){
+            @Override public void onProgressChanged(WebView view,int value){progress.setProgress(value);progress.setVisibility(value==100?View.GONE:View.VISIBLE);}
+            @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(!NavigationPolicy.internal(view.getUrl()))return false;if(photoCallback!=null)photoCallback.onReceiveValue(null);photoCallback=callback;Intent picker=new Intent(Intent.ACTION_OPEN_DOCUMENT);picker.addCategory(Intent.CATEGORY_OPENABLE);picker.setType("image/*");picker.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"image/png","image/jpeg","image/webp"});try{startActivityForResult(picker,100);}catch(android.content.ActivityNotFoundException error){photoCallback.onReceiveValue(null);photoCallback=null;}return true;}
+        });
+        browser.setWebViewClient(new WebViewClient(){
+            @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){String url=request.getUrl().toString();if(NavigationPolicy.internal(url))return false;if(request.isForMainFrame()&&NavigationPolicy.external(url,request.hasGesture()))openExternal(url);return true;}
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){if(NavigationPolicy.internal(url)){lastInternalUrl=url;showBrowser();}}
+            @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){if(request.isForMainFrame())showError();}
+            @Override public void onReceivedHttpError(WebView view,WebResourceRequest request,WebResourceResponse response){if(request.isForMainFrame()&&response.getStatusCode()>=500)showError();}
+            @Override public void onReceivedSslError(WebView view,SslErrorHandler handler,SslError error){handler.cancel();showError();}
+        });
+        browser.setDownloadListener((url,userAgent,disposition,mime,length)->{if(NavigationPolicy.external(url,true))openExternal(url);});
+        if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::back);
+        if(state!=null)browser.restoreState(state);else{String deep=getIntent().getDataString();browser.loadUrl(NavigationPolicy.appLink(deep,BuildConfig.START_PATH)?deep:lastInternalUrl);}
+    }
+    private void showBrowser(){errorPanel.setVisibility(View.GONE);browser.setVisibility(View.VISIBLE);}
+    private void showError(){browser.setVisibility(View.GONE);errorPanel.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
+    private void openExternal(String url){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}catch(android.content.ActivityNotFoundException error){showError();}}
+    private void back(){if(browser.canGoBack())browser.goBack();else finish();}
+    @Override public void onBackPressed(){back();}
+    @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);String url=intent.getDataString();if(NavigationPolicy.appLink(url,BuildConfig.START_PATH)){showBrowser();browser.loadUrl(url);}}
+    @Override protected void onSaveInstanceState(Bundle state){browser.saveState(state);super.onSaveInstanceState(state);}
+    @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==100&&photoCallback!=null){Uri photo=data==null?null:data.getData();photoCallback.onReceiveValue(result==RESULT_OK&&photo!=null&&"content".equals(photo.getScheme())?new Uri[]{photo}:null);photoCallback=null;}}
+    @Override protected void onStop(){CookieManager.getInstance().flush();super.onStop();}
+    @Override protected void onDestroy(){if(photoCallback!=null)photoCallback.onReceiveValue(null);browser.destroy();super.onDestroy();}
+}

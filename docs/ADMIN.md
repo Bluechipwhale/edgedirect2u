@@ -14,7 +14,7 @@ Presets populate editable fields. Colors, fonts, type scale, width, spacing, hea
 
 ## Products, categories and campaigns
 
-Create categories, then products. Category and inventory-owner fields use existing record IDs. The company owner ID is `edge`. Enter money in integer kobo: ₦1,000 = 100,000 kobo. Set real previous prices only when justified. Products start with zero units; receive stock through Inventory. Uncheck visibility to archive a product. The management list includes unpublished items and paginates 25 per page.
+Sign in at `/login` as `olasodechukwudi@gmail.com` using your registered password, then open `/admin/products`. Create categories first when you need new ones. The product editor offers category and approved inventory-owner choices, suggests a URL slug, and accepts prices in naira (stored as integer kobo on the server). Upload a valid PNG/JPEG/WebP under 5 MB through your authenticated administrator session, or paste an HTTPS image URL. The company owner ID is `edge`. Products start with zero units; receive stock through Inventory with a reason. Uncheck visibility to archive a product. The management list includes unpublished items and paginates 25 per page.
 
 Variant options use JSON such as `{"Size":["S","M","L"],"Color":["Black","White"]}`. Checkout requires a valid option for every configured dimension. Gallery URLs may be stored through the product schema; the standard editor exposes the main photo and variants.
 

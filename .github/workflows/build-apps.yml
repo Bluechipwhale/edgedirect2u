@@ -1,0 +1,155 @@
+name: Build installable apps
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag (v1.0.0 for the first release)
+        required: true
+        default: v1.0.0
+permissions:
+  contents: read
+jobs:
+  web:
+    uses: ./.github/workflows/verify.yml
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Prepare Java and verified Gradle
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          curl --fail --location --retry 3 https://services.gradle.org/distributions/gradle-8.13-bin.zip -o "$RUNNER_TEMP/gradle.zip"
+          printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/gradle.zip" | sha256sum --check -
+          unzip -q "$RUNNER_TEMP/gradle.zip" -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-8.13/bin" >> "$GITHUB_PATH"
+      - name: Prepare Android SDK
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64" "emulator"
+      - name: Restore private signing key
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          python3 - <<'PY'
+          import os,base64
+          value=os.environ.get('ANDROID_KEYSTORE_BASE64','')
+          if not value: raise SystemExit('Configure the private Android signing secrets before release')
+          path=os.path.join(os.environ['RUNNER_TEMP'],'android-signing.p12')
+          with open(path,'wb') as file: file.write(base64.b64decode(value,validate=True))
+          os.chmod(path,0o600)
+          with open(os.environ['GITHUB_ENV'],'a') as file: file.write('ANDROID_KEYSTORE_PATH='+path+'\n')
+          PY
+      - name: Build and test both signed Android apps
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: gradle --no-daemon -p native/android testStoreReleaseUnitTest testDriverReleaseUnitTest lintStoreRelease lintDriverRelease assembleStoreRelease assembleDriverRelease
+      - name: Verify distribution signatures
+        run: |
+          mkdir -p artifacts/native
+          cp native/android/app/build/outputs/apk/store/release/app-store-release.apk artifacts/native/Edgedirect2u-Store.apk
+          cp native/android/app/build/outputs/apk/driver/release/app-driver-release.apk artifacts/native/Edgedirect2u-Driver.apk
+          python3 - <<'PY'
+          import os,json,re,subprocess
+          expected=json.load(open('public/.well-known/assetlinks.json'))[0]['target']['sha256_cert_fingerprints'][0].replace(':','').lower()
+          signer=os.path.join(os.environ['ANDROID_HOME'],'build-tools','36.0.0','apksigner')
+          for name in ['Store','Driver']:
+            output=subprocess.check_output([signer,'verify','--verbose','--print-certs','artifacts/native/Edgedirect2u-'+name+'.apk'],text=True)
+            actual=re.search(r'certificate SHA-256 digest: ([a-fA-F0-9]+)',output).group(1).lower()
+            if actual!=expected: raise SystemExit('Distribution certificate does not match approved app links')
+            print(name+' APK signature verified against the public app-link certificate')
+          PY
+      - name: Launch apps in Android emulator
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          sudo chmod a+rw /dev/kvm
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeSmoke --package "system-images;android-35;google_apis;x86_64" --force
+          "$ANDROID_HOME/emulator/emulator" -avd EdgeSmoke -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -memory 2048 > "$RUNNER_TEMP/emulator.log" 2>&1 &
+          trap 'adb -s emulator-5554 emu kill || true' EXIT
+          adb -s emulator-5554 wait-for-device
+          ready=false
+          for attempt in $(seq 1 120); do
+            if [ "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then ready=true; break; fi
+            sleep 2
+          done
+          [ "$ready" = true ] || { tail -40 "$RUNNER_TEMP/emulator.log"; exit 1; }
+          adb -s emulator-5554 shell settings put global window_animation_scale 0
+          adb -s emulator-5554 shell settings put global transition_animation_scale 0
+          adb -s emulator-5554 install -r artifacts/native/Edgedirect2u-Store.apk
+          adb -s emulator-5554 shell am start -W -n com.edgedirect2u.store/com.edgedirect2u.shell.MainActivity
+          adb -s emulator-5554 install -r artifacts/native/Edgedirect2u-Driver.apk
+          adb -s emulator-5554 shell am start -W -n com.edgedirect2u.driver/com.edgedirect2u.shell.MainActivity
+          gradle --no-daemon -p native/android connectedStoreDebugAndroidTest connectedDriverDebugAndroidTest
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: android-apps
+          path: artifacts/native/*.apk
+          if-no-files-found: error
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build self-contained desktop app
+        run: dotnet publish native/windows/Edgedirect2u.Store.csproj -c Release -r win-x64 --self-contained true -o native/windows/publish
+      - name: Verify desktop launch and create installer
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          New-Item -ItemType Directory -Path artifacts/native -Force | Out-Null
+          Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile native/windows/MicrosoftEdgeWebview2Setup.exe
+          $runtime=Start-Process -FilePath native/windows/MicrosoftEdgeWebview2Setup.exe -ArgumentList '/silent','/install' -PassThru -WindowStyle Hidden
+          if (-not $runtime.WaitForExit(120000)) { Stop-Process -Id $runtime.Id -Force; throw 'WebView2 runtime setup timed out' }
+          $capture=Join-Path (Get-Location) 'artifacts/native/windows-smoke.png'
+          $smoke=Start-Process -FilePath native/windows/publish/Edgedirect2u.Store.exe -ArgumentList '--smoke-test','--screenshot',$capture -PassThru -WindowStyle Hidden
+          if (-not $smoke.WaitForExit(90000)) { Stop-Process -Id $smoke.Id -Force; throw 'Desktop launch verification timed out' }
+          if ($smoke.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $capture)) { throw 'Desktop renderer verification failed' }
+          choco install nsis -y --no-progress
+          if ($LASTEXITCODE -ne 0) { throw 'NSIS installation failed' }
+          Push-Location native/windows
+          & 'C:/Program Files (x86)/NSIS/makensis.exe' installer.nsi
+          if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
+          Pop-Location
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: windows-apps
+          path: artifacts/native/Edgedirect2u-Store-Setup.exe
+          if-no-files-found: error
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: windows-launch-preview
+          path: artifacts/native/windows-smoke.png
+  publish:
+    needs: [web, android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          pattern: '*-apps'
+          path: artifacts/native
+          merge-multiple: true
+      - name: Publish verified installers and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Use a version tag such as v1.0.0'; exit 1; }
+          cd artifacts/native
+          sha256sum Edgedirect2u-Store.apk Edgedirect2u-Driver.apk Edgedirect2u-Store-Setup.exe > SHA256SUMS.txt
+          cd ../..
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Edgedirect2u apps $RELEASE_TAG" --notes-file docs/APP-RELEASE.md
+          fi
+          gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" artifacts/native/Edgedirect2u-Store.apk artifacts/native/Edgedirect2u-Driver.apk artifacts/native/Edgedirect2u-Store-Setup.exe artifacts/native/SHA256SUMS.txt --clobber

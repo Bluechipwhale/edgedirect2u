@@ -1,0 +1,8 @@
+package com.edgedirect2u.shell;
+import org.junit.Test;
+import static org.junit.Assert.*;
+public class NavigationPolicyTest {
+    @Test public void internalNavigationRequiresExactSecureOrigin(){assertTrue(NavigationPolicy.internal("https://edgedirect2u.com/account"));assertFalse(NavigationPolicy.internal("http://edgedirect2u.com/"));assertFalse(NavigationPolicy.internal("https://edgedirect2u.com.evil.test/"));assertFalse(NavigationPolicy.internal("https://edgedirect2u.com@evil.test/"));assertFalse(NavigationPolicy.internal("https://edgedirect2u.com:8443/"));assertFalse(NavigationPolicy.internal("javascript:alert(1)"));assertFalse(NavigationPolicy.internal(null));}
+    @Test public void externalNavigationRequiresGestureOrTrustedPayment(){assertTrue(NavigationPolicy.external("https://checkout.paystack.com/session",false));assertTrue(NavigationPolicy.external("https://maps.google.com/",true));assertFalse(NavigationPolicy.external("https://evil.test/",false));assertFalse(NavigationPolicy.external("intent://evil",true));assertFalse(NavigationPolicy.external("file:///private",true));assertFalse(NavigationPolicy.external("https://user:pass@evil.test/",true));}
+    @Test public void deepLinksCannotOpenArbitraryScreens(){assertTrue(NavigationPolicy.appLink("https://edgedirect2u.com/checkout/confirmation?reference=abc","/"));assertFalse(NavigationPolicy.appLink("https://edgedirect2u.com/admin","/"));assertTrue(NavigationPolicy.appLink("https://edgedirect2u.com/driver","/driver"));assertFalse(NavigationPolicy.appLink("https://edgedirect2u.com/driver-evil","/driver"));assertFalse(NavigationPolicy.appLink("https://evil.test/driver","/driver"));}
+}

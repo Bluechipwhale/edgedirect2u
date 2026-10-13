@@ -1,0 +1,26 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.edgedirect2u.store",
+      "sha256_cert_fingerprints": [
+        "8F:0C:29:66:39:67:49:58:C9:88:1A:3C:D7:43:0A:B3:46:4F:97:8A:37:F5:F9:5E:0F:91:C5:70:3E:34:D4:AC"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.edgedirect2u.driver",
+      "sha256_cert_fingerprints": [
+        "8F:0C:29:66:39:67:49:58:C9:88:1A:3C:D7:43:0A:B3:46:4F:97:8A:37:F5:F9:5E:0F:91:C5:70:3E:34:D4:AC"
+      ]
+    }
+  }
+]
