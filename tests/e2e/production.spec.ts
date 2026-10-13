@@ -1,0 +1,30 @@
+import { test,expect } from '@playwright/test';
+test('password recovery, expired links and reset session guard',async({page})=>{
+  await page.goto('/login');await page.getByRole('link',{name:'Forgot password?'}).click();await expect(page.getByRole('heading',{name:'Let’s get you back in.'})).toBeVisible();
+  await page.getByLabel('Email address').fill('qa@example.com');await page.getByRole('button',{name:'Send recovery link'}).click();await expect(page.getByRole('alert').filter({hasText:'Connect Supabase'})).toContainText('Connect Supabase');
+  await page.goto('/auth/confirm?token_hash=invalid&type=recovery&next=https://untrusted.example');await expect(page).toHaveURL(/forgot-password\?expired=1/);await expect(page.getByText('This email link has expired or already been used. Request a new one below.')).toBeVisible();
+  await page.goto('/reset-password');await expect(page.getByRole('heading',{name:'Request a secure link.'})).toBeVisible();
+});
+test('saved addresses autofill checkout and a second tab follows bag changes',async({page,context,request})=>{
+  const origin='http://127.0.0.1:3100';const address={name:'Saved QA Customer',phone:'08012345678',street:'123 Saved Address Street',city:'Abeokuta',state:'Ogun'};
+  const res=await request.post('/api/manage',{headers:{origin},data:{kind:'addresses',id:'qa-autofill-address',data:address}});expect(res.ok()).toBe(true);
+  await page.goto('/products/sculpture-table-lamp');await page.getByRole('button',{name:'Add to bag',exact:true}).click();
+  const other=await context.newPage();await other.goto('/cart');await expect(other.getByRole('link',{name:'Shopping bag, 1 items'})).toBeVisible();
+  await page.goto('/checkout');await page.getByLabel('Choose a saved address').selectOption('qa-autofill-address');
+  await expect(page.getByLabel('Full name')).toHaveValue(address.name);await expect(page.getByLabel('Street address')).toHaveValue(address.street);await expect(page.getByLabel('State',{exact:true})).toHaveValue('Ogun');
+  await page.getByLabel('Choose a saved address').selectOption('');await expect(page.getByLabel('Full name')).toHaveValue('');
+  await other.getByRole('button',{name:'Remove Sculpture table lamp'}).click();await expect(page.getByRole('heading',{name:'A bag full of possibilities.'})).toBeVisible();await other.close();
+});
+test('CSP uses a fresh nonce and blocks inline injected scripts',async({page,request})=>{
+  const a=await request.get('/'),b=await request.get('/');
+  const csp=a.headers()['content-security-policy'];expect(csp).toContain("object-src 'none'");expect(csp).toContain("frame-ancestors 'self'");expect(csp).not.toBe(b.headers()['content-security-policy']);
+  await page.route('http://127.0.0.1:3100/',async route=>{const response=await route.fetch();expect(response.ok()).toBe(true);const body=(await response.text()).replace('<head>','<head><script>window.injected=true</script>');await route.fulfill({response,body});});
+  await page.goto('/');
+  expect(await page.evaluate(()=>Boolean((window as unknown as {injected?:boolean}).injected))).toBe(false);
+});
+test('small screens keep catalogue, checkout and recovery within viewport',async({page})=>{
+  for(const width of [320,390,768]){
+    await page.setViewportSize({width,height:900});
+    for(const path of ['/','/products','/forgot-password']){await page.goto(path);expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),`${path} at ${width}px`).toBe(true);}
+  }
+});

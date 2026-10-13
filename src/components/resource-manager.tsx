@@ -1,0 +1,26 @@
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { Plus, X, Pencil, Search } from 'lucide-react';
+import { resourceFields } from '@/lib/resources';
+import { money } from '@/lib/types';
+type Row = { id: string; data: Record<string, unknown> };
+export function ResourceManager({ kind, rows, title, description, readOnly=false }: {kind:string;rows:Row[];title:string;description:string;readOnly?:boolean}) {
+  const fields=resourceFields[kind]||[];
+  const [edit,setEdit]=useState<Row|null>(null), [query,setQuery]=useState(''), [error,setError]=useState(''), [busy,setBusy]=useState(false);
+  const router=useRouter();
+  function create(){const data:Record<string,unknown>={};fields.forEach(f=>data[f.key]=f.type==='checkbox'?true:f.type==='number'?0:f.options?.[0]||'');if(kind==='products')Object.assign(data,{options:{},images:[],merchant_id:'edge',merchant_name:'Edgedirect2u'});setEdit({id:'',data});setError('');}
+  async function submit(){setBusy(true);setError('');try{const response=await fetch('/api/manage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,id:edit?.id||undefined,data:edit?.data})});const result=await response.json();if(!response.ok)throw new Error(result.error);setEdit(null);router.refresh();}catch(e){setError(e instanceof Error?e.message:'Unable to save');}finally{setBusy(false);}}
+  const displayed=rows.filter(r=>JSON.stringify(r.data).toLowerCase().includes(query.toLowerCase()));
+  const columns=fields.length?fields.filter(f=>f.type!=='textarea'&&!['image','href','starts_at','ends_at','merchant_id','category_id','slug'].includes(f.key)).slice(0,4):Object.keys(rows[0]?.data||{}).slice(0,5).map(key=>({key,label:key.replace(/_/g,' ')}));
+  return <>
+    <div className="management-heading"><div><span className="eyebrow muted">COMMERCE WORKSPACE</span><h1>{title}</h1><p>{description}</p></div>{fields.length>0&&!readOnly&&<button className="button" onClick={create}><Plus size={16}/>Add record</button>}</div>
+    <div className="table-toolbar"><div className="input-icon"><Search size={16}/><input aria-label="Search records" placeholder="Search records" value={query} onChange={e=>setQuery(e.target.value)}/></div><span>{displayed.length} records</span></div>
+    <div className="table-wrap"><table><thead><tr><th>ID</th>{columns.map(c=><th key={c.key}>{c.label}</th>)}<th/></tr></thead><tbody>{displayed.map(row=><tr key={row.id}><td><code title={row.id}>{row.id.slice(0,15)}</code></td>{columns.map(c=><td key={c.key}>{typeof row.data[c.key]==='boolean'?<span className="status-chip">{row.data[c.key]?'Enabled':'Disabled'}</span>:c.key.includes('kobo')?money(Number(row.data[c.key])||0):typeof row.data[c.key]==='object'?JSON.stringify(row.data[c.key]):String(row.data[c.key]??'—')}</td>)}<td>{!readOnly&&fields.length>0&&<button className="icon-btn" aria-label={`Edit ${String(row.data.name||row.data.title||row.id)}`} onClick={()=>{setEdit(row);setError('');}}><Pencil size={15}/></button>}</td></tr>)}</tbody></table>{!displayed.length&&<div className="empty-state"><h3>A clean slate.</h3><p>{query?'No records match your search.':`No ${kind.replace(/_/g,' ')} yet.`}</p></div>}</div>
+    {edit&&<div className="modal-backdrop"><section className="modal edit-modal" role="dialog" aria-modal="true" aria-label={`Edit ${kind}`}><div className="modal-heading"><h2>{edit.id?'Edit':'Add'} record</h2><button className="icon-btn" aria-label="Close editor" onClick={()=>setEdit(null)}><X size={20}/></button></div><form onSubmit={e=>{e.preventDefault();submit();}}>{fields.map(f=><label key={f.key} className={f.type==='checkbox'?'check-label':''}>{f.label}{f.type==='textarea'?<textarea required={f.required} value={String(edit.data[f.key]||'')} onChange={e=>setEdit({...edit,data:{...edit.data,[f.key]:e.target.value}})}/>:f.type==='select'?<select value={String(edit.data[f.key]||f.options?.[0])} onChange={e=>setEdit({...edit,data:{...edit.data,[f.key]:e.target.value}})}>{f.options?.map(o=><option key={o}>{o}</option>)}</select>:<input required={f.required} type={f.type==='number'?'number':f.type==='checkbox'?'checkbox':'text'} {...(f.type==='checkbox'?{checked:Boolean(edit.data[f.key])}:{value:String(edit.data[f.key]??'')})} onChange={e=>setEdit({...edit,data:{...edit.data,[f.key]:f.type==='checkbox'?e.target.checked:f.type==='number'?Number(e.target.value):e.target.value}})}/>}</label>)}
+    {typeof edit.data.image==='string'&&/^https:\/\//.test(edit.data.image)&&<Image src={edit.data.image} alt="Current image preview" width={260} height={160} unoptimized style={{objectFit:'cover',borderRadius:8}}/>}
+    {kind==='products'&&<label>Variant options (JSON)<textarea defaultValue={JSON.stringify(edit.data.options||{})} onBlur={e=>{try{const options=JSON.parse(e.target.value);setEdit({...edit,data:{...edit.data,options}});setError('');}catch{setError('Variant options must be valid JSON');}}}/></label>}
+    {error&&<p className="error-message" role="alert">{error}</p>}<div className="modal-actions"><button type="button" className="small-button" onClick={()=>setEdit(null)}>Cancel</button><button className="button" disabled={busy||!!error}>{busy?'Saving…':'Save record'}</button></div></form></section></div>}
+  </>;
+}

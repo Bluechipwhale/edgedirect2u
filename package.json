@@ -1,0 +1,53 @@
+{
+  "name": "edged2uu",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node --use-system-ca node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
+    "build": "node --use-system-ca node_modules/next/dist/bin/next build",
+    "start": "node --use-system-ca node_modules/next/dist/bin/next start",
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "seed:generate": "node scripts/generate-seed.cjs",
+    "check:env": "node scripts/check-env.cjs",
+    "db:check": "node scripts/database.cjs --check",
+    "db:plan": "node scripts/database.cjs",
+    "db:migrate": "node scripts/database.cjs --apply",
+    "check:services": "node --use-system-ca scripts/check-services.cjs",
+    "check:production": "node --use-system-ca scripts/smoke-production.cjs",
+    "ops:status": "node scripts/operations.cjs",
+    "ops:schedule": "node scripts/operations.cjs --schedule",
+    "build:hostinger": "node scripts/prepare-hostinger.cjs && npm run build && node scripts/package-standalone.cjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
+    "lucide-react": "^1.55.0",
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.9",
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "esbuild": "^0.28.1",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.0",
+    "pg": "^8.23.1",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "vite": "^7.3.7",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=24 <25"
+  }
+}

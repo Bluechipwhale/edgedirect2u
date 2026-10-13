@@ -1,0 +1,27 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { requireRole,catalogue,records,orders,managementProducts,localMode,supabase } from '@/lib/server';
+import { ResourceManager } from '@/components/resource-manager';
+import { Operations } from '@/components/operations';
+import { RefundManager } from '@/components/refund-manager';
+import { RoleManager } from '@/components/role-manager';
+import { resourceFields } from '@/lib/resources';
+import { LaunchReadiness } from '@/components/launch-readiness';
+const descriptions:Record<string,string>={products:'Manage active and unpublished products. Adjust stock through the inventory ledger.',categories:'Subcategories use a parent category ID.',merchants:'Review applications, approve merchants and configure commissions.',banners:'Create homepage campaigns with images, links and scheduled dates.',coupons:'Create server-validated percentage discounts.',warehouses:'Manage warehouse locations. Inventory quantities are tracked per product and owner.',suppliers:'Maintain your supplier directory.',purchase_orders:'Record procurement status. Receive units through Inventory → Adjust with a purchase order reference.',drivers:'Link authorized driver accounts to the dispatch team.',policies:'Write and publish your policy and help pages.',notifications:'Maintain notification configuration. Sending requires a provider.',returns:'Review return requests from verified paid orders.',settlements:'Record externally processed bank settlements. No automatic transfer is made.',reviews:'Moderate verified purchase reviews.'};
+export default async function Page({params,searchParams}:{params:Promise<{resource:string}>;searchParams:Promise<{page?:string}>}){
+  const {resource}=await params;const a=await requireRole(['admin','operations']);const page=Math.max(1,Math.floor(Number((await searchParams).page)||1));
+  if(['inventory','orders','dispatch'].includes(resource)){
+    const [data,all,jobs,drivers]=await Promise.all([managementProducts(a,page),orders(a),records('deliveries'),records('drivers')]);
+    return <><div className="management-heading"><div><span className="eyebrow muted">COMMERCE OPERATIONS</span><h1>{resource==='dispatch'?'Dispatch & delivery':resource==='inventory'?'Inventory & stock':'Order management'}</h1><p>{resource==='inventory'?'Record stock movements and protect reserved inventory.':resource==='dispatch'?'Assign paid orders and follow delivery events.':'From reservation to verified payment and fulfilment.'}</p></div></div><div className="resource-subnav"><Link href="/admin/drivers">Drivers</Link><Link href="/admin/warehouses">Warehouses</Link><Link href="/admin/stock_movements">Stock movements</Link><Link href="/admin/returns">Returns</Link></div><Operations kind={resource as 'inventory'|'orders'|'dispatch'} products={data.products} orders={all} jobs={jobs} drivers={drivers}/>{resource==='inventory'&&<Pagination page={page} count={data.count}/>}</>;
+  }
+  if(a.role!=='admin'&&!['stock_movements','audit'].includes(resource))throw new Error('Forbidden');
+  if(resource==='roles')return <RoleManager users={await localMode()?[]:(await(await supabase()).from('profiles').select('id,name,role').order('name').range((page-1)*50,page*50-1)).data||[]}/>;
+  if(resource==='refunds')return <RefundManager rows={await records('refunds')}/>;
+  if(resource==='settings')return <LaunchReadiness/>;
+  if(resource==='finance')return <><h1>Finance & reconciliation.</h1><p>Verified payments, commission entries and recorded settlements.</p><div className="resource-subnav"><Link href="/admin/merchant_ledger">Merchant ledger</Link><Link href="/admin/settlements">Settlements</Link><Link href="/admin/refunds">Refunds</Link><Link href="/admin/coupons">Coupons</Link></div><ResourceManager kind="merchant_ledger" rows={(await records('merchant_ledger')).map(r=>({id:r.id,data:r.data}))} title="Merchant ledger" description="Entries are generated after payment verification. Refunded orders require finance review before settlement." readOnly/></>;
+  if(!resourceFields[resource]&&!['audit','stock_movements','merchant_ledger','customers'].includes(resource))notFound();
+  const products=resource==='products'?await managementProducts(a,page):null;
+  const rows=products?products.products.map(p=>({id:p.id,data:{...p}})):resource==='categories'?(await catalogue()).categories.map(c=>({id:c.id,data:{...c}})):(await records(resource)).map(r=>({id:r.id,data:r.data}));
+  return <><div className="resource-subnav"><Link href="/admin/banners">Banners</Link><Link href="/admin/coupons">Coupons</Link><Link href="/admin/policies">Policy pages</Link><Link href="/admin/suppliers">Suppliers</Link><Link href="/admin/purchase_orders">Purchase orders</Link></div><ResourceManager kind={resource} rows={rows} title={resource.replace(/_/g,' ').replace(/^./,c=>c.toUpperCase())} description={descriptions[resource]||'Most recent authorized records from marketplace operations (up to 100).'} readOnly={!resourceFields[resource]}/>{products&&<Pagination page={page} count={products.count}/>}</>;
+}
+function Pagination({page,count}:{page:number;count:number}){return <div className="pagination">{page>1&&<Link href={`?page=${page-1}`}>Previous</Link>}<span>Page {page} · {count} products</span>{page*25<count&&<Link href={`?page=${page+1}`}>Next</Link>}</div>;}

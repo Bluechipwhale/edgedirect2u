@@ -1,0 +1,5 @@
+import Image from 'next/image';
+import { notFound } from 'next/navigation';
+import { records,catalogue } from '@/lib/server';
+import { ProductCard } from '@/components/product-card';
+export default async function Page({params}:{params:Promise<{id:string}>}){const {id}=await params;const m=(await records('merchants',true)).find(m=>m.id===id&&m.data.status==='approved');if(!m)notFound();const data=await catalogue('','','',1,id);return <div className="container catalog-page"><span className="eyebrow muted">MERCHANT STOREFRONT</span><h1>{String(m.data.name)}</h1>{Boolean(m.data.cover)&&<div className="merchant-cover"><Image src={String(m.data.cover)} alt={`${String(m.data.name)} cover`} fill unoptimized sizes="100vw"/></div>}{Boolean(m.data.logo)&&<Image src={String(m.data.logo)} alt={`${String(m.data.name)} logo`} width={100} height={100} unoptimized/>}<p>{String(m.data.description)}</p><div className="product-grid">{data.products.map(p=><ProductCard key={p.id} product={p}/>)}</div>{!data.products.length&&<div className="empty-state">New finds are coming soon.</div>}</div>;}

@@ -1,0 +1,8 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { requireRole, localMode, supabase } from '@/lib/server';
+import { localStore } from '@/lib/local-store';
+import { themeSchema, defaultTheme,assertPublishable } from '@/lib/theme';
+import { guard, failure } from '@/lib/http';
+export async function GET() { try { await requireRole(['admin']); if (await localMode()) return NextResponse.json({ draft: localStore().get('settings','draft'), versions: localStore().versions() }); const db = await supabase(); const [{ data }, { data: versions }] = await Promise.all([db.from('website_settings').select('config').eq('id','draft').single(), db.from('theme_versions').select('id,created_at').order('created_at',{ascending:false}).limit(30)]); return NextResponse.json({ draft: data?.config || defaultTheme, versions: versions || [] }); } catch(e) { return failure(e); } }
+export async function POST(request: Request) { try { guard(request); const a = await requireRole(['admin']); const input = z.object({ action: z.enum(['draft','publish','rollback']), config: themeSchema.optional(), version: z.string().max(100).optional() }).parse(await request.json()); if(input.action==='publish'&&input.config)assertPublishable(input.config); if (await localMode()) localStore().theme(a,input.action,input.config,input.version); else { const { error } = await (await supabase()).rpc('change_theme',{ p_action:input.action,p_config:input.config || null,p_version:input.version || null }); if(error) throw new Error(error.message); } return NextResponse.json({ok:true}); } catch(e) {return failure(e);} }

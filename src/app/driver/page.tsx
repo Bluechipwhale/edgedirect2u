@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import { requireRole,records,supabase } from '@/lib/server';
+import { DriverAvailability } from '@/components/driver-availability';
+import { DriverInstall } from '@/components/driver-install';
+import { Operations } from '@/components/operations';
+export const metadata={title:'Driver workspace',robots:{index:false,follow:false},manifest:'/manifest.webmanifest'};
+export default async function Page(){let a;try{a=await requireRole(['driver']);}catch{return <div className="container narrow-page"><h1>Your delivery day, simplified.</h1><p>Sign in with an authorized driver account to view assigned deliveries.</p><Link className="button" href="/login">Driver sign in</Link></div>;}const {data:driver}=await(await supabase()).from('drivers').select('available').eq('user_id',a.id).single();const jobs=(await records('deliveries')).filter(j=>j.data.driver_id===a.id);return <div className="container catalog-page"><Link className="text-button" href="/">← Storefront</Link><h1 className="section">Your delivery day.</h1><p>Only deliveries assigned to your account appear here.</p><DriverInstall/>{driver&&<DriverAvailability available={driver.available}/>}<Operations kind="driver" jobs={jobs}/></div>;}

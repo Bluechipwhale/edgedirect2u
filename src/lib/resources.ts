@@ -1,0 +1,38 @@
+import { z } from 'zod';
+const text=z.string().min(1).max(500);const optional=z.string().max(1000).default('');const url=z.string().max(1000).refine(v=>!v||/^https:\/\//.test(v)||/^\/(?!\/)/.test(v),'Use HTTPS or a relative URL');
+const date=z.union([z.literal(''),z.iso.datetime({offset:true})]).default('');
+export const productSchema=z.object({id:z.string().max(100).optional(),slug:z.string().regex(/^[a-z0-9-]+$/),name:text,category_id:text,brand:text,merchant_id:text,merchant_name:text,price_kobo:z.number().int().positive().max(1_000_000_000),previous_price_kobo:z.number().int().positive().optional(),image:url,images:z.array(url).max(10).default([]),description:text,options:z.record(z.string().max(60),z.array(text).min(1).max(30)).default({}),featured:z.boolean().default(false),active:z.boolean().default(true)});
+export const resourceSchemas:Record<string,z.ZodType>={
+  categories:z.object({name:text,image:url,parent_id:optional}),
+  merchants:z.object({name:text,description:optional,email:z.union([z.literal(''),z.email()]).default(''),status:z.enum(['pending','approved','suspended']),commission_bps:z.number().int().min(0).max(10000).default(1000)}),
+  banners:z.object({title:text,text:optional,cta:text,href:url,image:url,mobile_image:url.default(''),enabled:z.boolean(),position:z.enum(['home']),starts_at:date,ends_at:date}).refine(v=>!v.starts_at||!v.ends_at||Date.parse(v.ends_at)>Date.parse(v.starts_at),'Campaign end must follow its start'),
+  coupons:z.object({code:z.string().regex(/^[A-Z0-9_-]{2,40}$/),percent:z.number().int().min(1).max(90),active:z.boolean(),ends_at:date}),
+  warehouses:z.object({name:text,address:text,active:z.boolean()}),
+  suppliers:z.object({name:text,email:z.email(),phone:optional,address:optional}),
+  purchase_orders:z.object({supplier_id:text,warehouse_id:text,notes:optional,status:z.enum(['draft','ordered','received','cancelled']),total_kobo:z.number().int().min(0)}),
+  drivers:z.object({name:text,user_id:z.uuid(),phone:text,available:z.boolean()}),
+  policies:z.object({slug:z.enum(['privacy','terms','returns','delivery','help']),title:text,content:z.string().min(1).max(20000)}),
+  notifications:z.object({title:text,message:text,enabled:z.boolean()}),
+  returns:z.object({order_id:text,reason:text,status:z.enum(['requested','approved','declined','received'])}),
+  addresses:z.object({name:text,phone:text,street:text,city:text,state:text}),
+  settlements:z.object({merchant_id:text,amount_kobo:z.number().int().positive(),reference:text,status:z.enum(['pending','recorded'])}),
+  reviews:z.object({product_id:text,order_id:text,rating:z.number().int().min(1).max(5),comment:text,status:z.enum(['pending','published','rejected'])}),
+};
+export type Field={key:string;label:string;type?:'text'|'textarea'|'number'|'checkbox'|'select';options?:string[];required?:boolean};
+export const resourceFields:Record<string,Field[]>={
+  products:[{key:'name',label:'Product name',required:true},{key:'slug',label:'URL slug',required:true},{key:'category_id',label:'Category ID',required:true},{key:'brand',label:'Brand',required:true},{key:'merchant_id',label:'Inventory owner ID',required:true},{key:'merchant_name',label:'Merchant name',required:true},{key:'price_kobo',label:'Price (integer kobo)',type:'number',required:true},{key:'image',label:'Image URL',required:true},{key:'description',label:'Description',type:'textarea',required:true},{key:'featured',label:'Featured on homepage',type:'checkbox'},{key:'active',label:'Visible in storefront',type:'checkbox'}],
+  categories:[{key:'name',label:'Category name',required:true},{key:'image',label:'Image URL',required:true},{key:'parent_id',label:'Parent category ID (optional)'}],
+  merchants:[{key:'name',label:'Store name',required:true},{key:'description',label:'Store description',type:'textarea'},{key:'email',label:'Contact email'},{key:'status',label:'Approval status',type:'select',options:['pending','approved','suspended']},{key:'commission_bps',label:'Commission (basis points, 1000 = 10%)',type:'number'}],
+  banners:[{key:'title',label:'Heading',required:true},{key:'text',label:'Description',type:'textarea'},{key:'cta',label:'Button label',required:true},{key:'href',label:'Button link',required:true},{key:'image',label:'Desktop image URL',required:true},{key:'mobile_image',label:'Mobile image URL (optional)'},{key:'position',label:'Position',type:'select',options:['home']},{key:'starts_at',label:'Starts at (ISO timestamp, optional)'},{key:'ends_at',label:'Ends at (ISO timestamp, optional)'},{key:'enabled',label:'Enabled',type:'checkbox'}],
+  coupons:[{key:'code',label:'Coupon code',required:true},{key:'percent',label:'Discount percentage',type:'number',required:true},{key:'ends_at',label:'Expires at (ISO timestamp)'},{key:'active',label:'Active',type:'checkbox'}],
+  warehouses:[{key:'name',label:'Warehouse name',required:true},{key:'address',label:'Address',type:'textarea',required:true},{key:'active',label:'Active',type:'checkbox'}],
+  suppliers:[{key:'name',label:'Supplier name',required:true},{key:'email',label:'Email',required:true},{key:'phone',label:'Phone'},{key:'address',label:'Address',type:'textarea'}],
+  purchase_orders:[{key:'supplier_id',label:'Supplier ID',required:true},{key:'warehouse_id',label:'Warehouse ID',required:true},{key:'notes',label:'Notes',type:'textarea'},{key:'total_kobo',label:'Total (kobo)',type:'number',required:true},{key:'status',label:'Status',type:'select',options:['draft','ordered','received','cancelled']}],
+  drivers:[{key:'name',label:'Driver name',required:true},{key:'user_id',label:'Authenticated driver user ID',required:true},{key:'phone',label:'Phone',required:true},{key:'available',label:'Available',type:'checkbox'}],
+  policies:[{key:'slug',label:'Page',type:'select',options:['privacy','terms','returns','delivery','help']},{key:'title',label:'Title',required:true},{key:'content',label:'Policy content',type:'textarea',required:true}],
+  notifications:[{key:'title',label:'Notification title',required:true},{key:'message',label:'Message',type:'textarea',required:true},{key:'enabled',label:'Enabled',type:'checkbox'}],
+  returns:[{key:'order_id',label:'Order ID',required:true},{key:'reason',label:'Return reason',type:'textarea',required:true},{key:'status',label:'Status',type:'select',options:['requested','approved','declined','received']}],
+  addresses:[{key:'name',label:'Recipient name',required:true},{key:'phone',label:'Phone',required:true},{key:'street',label:'Street address',required:true},{key:'city',label:'City',required:true},{key:'state',label:'State',required:true}],
+  settlements:[{key:'merchant_id',label:'Merchant ID',required:true},{key:'amount_kobo',label:'Settlement amount (kobo)',type:'number',required:true},{key:'reference',label:'Bank transfer reference',required:true},{key:'status',label:'Status',type:'select',options:['pending','recorded']}],
+  reviews:[{key:'product_id',label:'Product ID',required:true},{key:'order_id',label:'Paid order ID',required:true},{key:'rating',label:'Rating (1–5)',type:'number',required:true},{key:'comment',label:'Review',type:'textarea',required:true},{key:'status',label:'Moderation status',type:'select',options:['pending','published','rejected']}],
+};

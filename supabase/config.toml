@@ -1,0 +1,20 @@
+project_id = "edgedirect2u"
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+[db]
+major_version = 17
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://edgedirect2u.com"]
+enable_anonymous_sign_ins = true
+minimum_password_length = 10
+[storage]
+enabled = true
+file_size_limit = "5MiB"

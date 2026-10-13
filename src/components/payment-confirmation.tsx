@@ -1,0 +1,5 @@
+'use client';
+import { useShop } from './shop-state';
+import { useState } from 'react';
+import Link from 'next/link';
+export function PaymentConfirmation({reference}:{reference:string}){const shop=useShop();const [message,setMessage]=useState('A payment redirect does not confirm your payment. Verify with the provider to update your order.'),[busy,setBusy]=useState(false);return <div className="container narrow-page"><h1>Let’s check your payment.</h1><p role="status">{message}</p><button className="button" disabled={busy||!reference} onClick={async()=>{setBusy(true);try{const r=await fetch('/api/payments/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reference})});const data=await r.json();if(r.ok){shop.clear();sessionStorage.removeItem('edge-checkout-intent');}setMessage(r.ok?'Payment verified. Your order is being prepared.':data.error);}catch{setMessage('Could not verify payment. Please retry.');}finally{setBusy(false);}}}>{busy?'Verifying…':'Verify payment'}</button><div className="profile-links"><Link href="/account/orders">View your orders</Link></div></div>;}
