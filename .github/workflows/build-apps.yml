@@ -106,15 +106,19 @@ jobs:
           $ErrorActionPreference='Stop'
           New-Item -ItemType Directory -Path artifacts/native -Force | Out-Null
           Invoke-WebRequest -Uri 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile native/windows/MicrosoftEdgeWebview2Setup.exe
+          $signature=Get-AuthenticodeSignature -LiteralPath native/windows/MicrosoftEdgeWebview2Setup.exe
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'WebView2 bootstrapper signature is invalid' }
           $runtime=Start-Process -FilePath native/windows/MicrosoftEdgeWebview2Setup.exe -ArgumentList '/silent','/install' -PassThru -WindowStyle Hidden
           if (-not $runtime.WaitForExit(120000)) { Stop-Process -Id $runtime.Id -Force; throw 'WebView2 runtime setup timed out' }
           $capture=Join-Path (Get-Location) 'artifacts/native/windows-smoke.png'
           $smoke=Start-Process -FilePath native/windows/publish/Edgedirect2u.Store.exe -ArgumentList '--smoke-test','--screenshot',$capture -PassThru -WindowStyle Hidden
           if (-not $smoke.WaitForExit(90000)) { Stop-Process -Id $smoke.Id -Force; throw 'Desktop launch verification timed out' }
+          if (Test-Path -LiteralPath "$capture.log") { Get-Content -LiteralPath "$capture.log" }
           if ($smoke.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $capture)) { throw 'Desktop renderer verification failed' }
           choco install nsis -y --no-progress
           if ($LASTEXITCODE -ne 0) { throw 'NSIS installation failed' }
           Push-Location native/windows
+          ./prepare-installer.ps1
           & 'C:/Program Files (x86)/NSIS/makensis.exe' installer.nsi
           if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed' }
           Pop-Location
@@ -127,7 +131,7 @@ jobs:
         if: always()
         with:
           name: windows-launch-preview
-          path: artifacts/native/windows-smoke.png
+          path: artifacts/native/windows-smoke.png*
   publish:
     needs: [web, android, windows]
     runs-on: ubuntu-latest

@@ -20,7 +20,7 @@ internal sealed class StoreWindow : Form {
         var toolbar=new FlowLayoutPanel{Dock=DockStyle.Top,Height=50,Padding=new Padding(10,4,10,4),BackColor=Color.White,WrapContents=false};
         Button ToolButton(string text,Action action){var button=new Button{Text=text,AutoSize=true,FlatStyle=FlatStyle.Flat,Height=36,BackColor=Color.FromArgb(243,239,255),ForeColor=Color.FromArgb(108,59,255)};button.FlatAppearance.BorderSize=0;button.Click+=(_,_)=>action();return button;}
         toolbar.Controls.Add(ToolButton("←",()=>{if(browser.CoreWebView2?.CanGoBack==true)browser.GoBack();}));
-        toolbar.Controls.Add(ToolButton("Refresh",()=>{if(browser.CoreWebView2!=null)browser.Source=new Uri(Home);}));
+        toolbar.Controls.Add(ToolButton("Refresh",()=>{if(browser.CoreWebView2!=null){if(InApp(browser.Source?.AbsoluteUri??""))browser.Reload();else browser.Source=new Uri(Home);}}));
         toolbar.Controls.Add(ToolButton("Store",()=>{if(browser.CoreWebView2!=null)browser.Source=new Uri(Home);}));
         toolbar.Controls.Add(ToolButton("Admin",()=>{if(browser.CoreWebView2!=null)browser.Source=new Uri(Home+"/admin");}));
         toolbar.Controls.Add(location);
@@ -28,22 +28,26 @@ internal sealed class StoreWindow : Form {
     }
     private static bool InApp(string value){if(!Uri.TryCreate(value,UriKind.Absolute,out var uri)||uri.Scheme!="https"||!uri.IsDefaultPort||!string.IsNullOrEmpty(uri.UserInfo))return false;return uri.Host is "edgedirect2u.com" or "checkout.paystack.com" or "paystack.com";}
     private static void External(string value){if(!Uri.TryCreate(value,UriKind.Absolute,out var uri)||!string.IsNullOrEmpty(uri.UserInfo)||uri.Scheme is not ("https" or "mailto" or "tel"))return;try{Process.Start(new ProcessStartInfo(value){UseShellExecute=true});}catch(Exception){} }
+    private void SmokeLog(string message){if(!smoke)return;var index=Array.IndexOf(arguments,"--screenshot");if(index>=0&&index+1<arguments.Length)File.AppendAllText(arguments[index+1]+".log",DateTime.UtcNow.ToString("O")+" "+message+Environment.NewLine);}
     private async Task Initialize(){
         try {
+            SmokeLog("Initializing secure renderer");
             string profile=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Edgedirect2uStore","Browser");
             var environment=await CoreWebView2Environment.CreateAsync(null,profile);
             await browser.EnsureCoreWebView2Async(environment);
+            SmokeLog("Renderer ready: "+environment.BrowserVersionString);
             var settings=browser.CoreWebView2.Settings;settings.AreDevToolsEnabled=false;settings.IsWebMessageEnabled=false;settings.AreHostObjectsAllowed=false;settings.IsStatusBarEnabled=false;settings.UserAgent+=" Edgedirect2uNative/windows";
             browser.CoreWebView2.PermissionRequested+=(_,e)=>e.State=CoreWebView2PermissionState.Deny;
             browser.CoreWebView2.ServerCertificateErrorDetected+=(_,e)=>e.Action=CoreWebView2ServerCertificateErrorAction.Cancel;
             browser.CoreWebView2.NavigationStarting+=(_,e)=>{if(e.Uri=="about:blank")return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host=="edgedirect2u.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
             browser.CoreWebView2.NewWindowRequested+=(_,e)=>{e.Handled=true;if(InApp(e.Uri))browser.CoreWebView2.Navigate(e.Uri);else if(e.IsUserInitiated)External(e.Uri);};
             browser.CoreWebView2.NavigationCompleted+=async(_,e)=>{
-                if(smoke){if(!e.IsSuccess){Environment.ExitCode=1;Close();return;}var index=Array.IndexOf(arguments,"--screenshot");if(index>=0&&index+1<arguments.Length){using var stream=File.Create(arguments[index+1]);await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);}Close();return;}
+                if(smoke){try{SmokeLog("Navigation: "+e.IsSuccess+" "+e.WebErrorStatus);if(!e.IsSuccess){Environment.ExitCode=1;Close();return;}var index=Array.IndexOf(arguments,"--screenshot");if(index>=0&&index+1<arguments.Length){using var stream=File.Create(arguments[index+1]);await browser.CoreWebView2.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,stream);SmokeLog("Captured "+stream.Length+" bytes");}Close();}catch(Exception error){SmokeLog(error.ToString());Environment.ExitCode=1;Close();}return;}
                 if(!e.IsSuccess)browser.CoreWebView2.NavigateToString(OfflinePage);
             };
             if(smoke)browser.CoreWebView2.NavigateToString(OfflinePage);else browser.Source=new Uri(Home);
-        }catch(Exception){
+        }catch(Exception error){
+            SmokeLog(error.ToString());
             if(smoke){Environment.ExitCode=1;Close();return;}
             MessageBox.Show("The store could not start its secure browser. Install Microsoft Edge WebView2 Runtime, then reopen Edgedirect2u.","Edgedirect2u Store",MessageBoxButtons.OK,MessageBoxIcon.Information);
             External("https://developer.microsoft.com/microsoft-edge/webview2/");Close();

@@ -1,5 +1,6 @@
 package com.edgedirect2u.shell;
-import android.app.Activity;
+import androidx.activity.ComponentActivity;
+import androidx.activity.OnBackPressedCallback;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -23,7 +24,7 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-public final class MainActivity extends Activity {
+public final class MainActivity extends ComponentActivity {
     private WebView browser;
     private ProgressBar progress;
     private LinearLayout errorPanel;
@@ -55,14 +56,13 @@ public final class MainActivity extends Activity {
             @Override public void onReceivedSslError(WebView view,SslErrorHandler handler,SslError error){handler.cancel();showError();}
         });
         browser.setDownloadListener((url,userAgent,disposition,mime,length)->{if(NavigationPolicy.external(url,true))openExternal(url);});
-        if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,this::back);
+        getOnBackPressedDispatcher().addCallback(this,new OnBackPressedCallback(true){@Override public void handleOnBackPressed(){back();}});
         if(state!=null)browser.restoreState(state);else{String deep=getIntent().getDataString();browser.loadUrl(NavigationPolicy.appLink(deep,BuildConfig.START_PATH)?deep:lastInternalUrl);}
     }
     private void showBrowser(){errorPanel.setVisibility(View.GONE);browser.setVisibility(View.VISIBLE);}
     private void showError(){browser.setVisibility(View.GONE);errorPanel.setVisibility(View.VISIBLE);progress.setVisibility(View.GONE);}
     private void openExternal(String url){try{startActivity(new Intent(Intent.ACTION_VIEW,Uri.parse(url)));}catch(android.content.ActivityNotFoundException error){showError();}}
     private void back(){if(browser.canGoBack())browser.goBack();else finish();}
-    @Override public void onBackPressed(){back();}
     @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);String url=intent.getDataString();if(NavigationPolicy.appLink(url,BuildConfig.START_PATH)){showBrowser();browser.loadUrl(url);}}
     @Override protected void onSaveInstanceState(Bundle state){browser.saveState(state);super.onSaveInstanceState(state);}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==100&&photoCallback!=null){Uri photo=data==null?null:data.getData();photoCallback.onReceiveValue(result==RESULT_OK&&photo!=null&&"content".equals(photo.getScheme())?new Uri[]{photo}:null);photoCallback=null;}}

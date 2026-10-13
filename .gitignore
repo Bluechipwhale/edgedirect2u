@@ -52,6 +52,7 @@ next-env.d.ts
 /native/**/publish/
 /native/android/local.properties
 /native/windows/MicrosoftEdgeWebview2Setup.exe
+/native/windows/*-files.nsh
 *.jks
 *.keystore
 *.p12
