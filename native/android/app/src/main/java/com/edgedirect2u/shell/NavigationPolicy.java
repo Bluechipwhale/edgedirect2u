@@ -1,8 +1,11 @@
 package com.edgedirect2u.shell;
 import java.net.URI;
 import java.util.Set;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Arrays;
 public final class NavigationPolicy {
-    private static final Set<String> PAYMENTS=Set.of("checkout.paystack.com", "paystack.com");
+    private static final Set<String> PAYMENTS=Collections.unmodifiableSet(new HashSet<>(Arrays.asList("checkout.paystack.com", "paystack.com")));
     private NavigationPolicy() {}
     public static boolean internal(String value) {
         try { URI uri=new URI(value);return "https".equalsIgnoreCase(uri.getScheme())&&"edgedirect2u.com".equalsIgnoreCase(uri.getHost())&&uri.getUserInfo()==null&&(uri.getPort()==-1||uri.getPort()==443); } catch(Exception error) { return false; }
