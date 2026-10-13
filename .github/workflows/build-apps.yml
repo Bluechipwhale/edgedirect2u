@@ -69,7 +69,12 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           sudo chmod a+rw /dev/kvm
-          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeSmoke --package "system-images;android-35;google_apis;x86_64" --force
+          export ANDROID_USER_HOME="$RUNNER_TEMP/edge-android"
+          export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
+          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeSmoke --path "$ANDROID_AVD_HOME/EdgeSmoke.avd" --package "system-images;android-35;google_apis;x86_64" --force
+          "$ANDROID_HOME/emulator/emulator" -list-avds | grep -Fx EdgeSmoke
           "$ANDROID_HOME/emulator/emulator" -avd EdgeSmoke -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader -memory 2048 > "$RUNNER_TEMP/emulator.log" 2>&1 &
           trap 'adb -s emulator-5554 emu kill || true' EXIT
           timeout 120s adb -s emulator-5554 wait-for-device || { tail -60 "$RUNNER_TEMP/emulator.log"; exit 1; }
