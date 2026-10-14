@@ -1,4 +1,4 @@
-Edgedirect2u Store for Android, Edge Driver for Android, and the Windows store installer share the hosted application at https://edgedirect2u.com.
+Version 1.0.1 connects Edgedirect2u Store for Android, Edge Driver for Android, and the Windows store installer to the verified live application at https://edgedirect2u.vercel.app. The custom edgedirect2u.com domain remains trusted for future domain activation. Both Android packages retain the original signing certificate, so they can update version 1.0.0.
 
 - Installable store web app, app download hub and clear offline recovery.
 - Separate Android store and driver packages with verified release signatures, secure navigation, persistent sessions and driver account authorization.
@@ -6,7 +6,7 @@ Edgedirect2u Store for Android, Edge Driver for Android, and the Windows store i
 - Improved product editor: category and inventory-owner choices, prices in naira, automatic slugs and authenticated photo uploads.
 - Administrator onboarding and role-specific destinations after sign-in.
 
-The hosted website must be deployed before these online clients can load it. Sign in at https://edgedirect2u.com/login using olasodechukwudi@gmail.com, then open https://edgedirect2u.com/admin/products to add products. Add actual stock through https://edgedirect2u.com/admin/inventory.
+The hosted website is live. Sign in at https://edgedirect2u.vercel.app/login using olasodechukwudi@gmail.com, then open https://edgedirect2u.vercel.app/admin/products to add products. Add actual stock through https://edgedirect2u.vercel.app/admin/inventory.
 
 Android packages are signed for direct installation; Google Play publication is separate. The Windows installer is unsigned because no Windows code-signing certificate has been supplied. Windows may show a SmartScreen prompt. Compare the installer SHA-256 with SHA256SUMS.txt from this release.
 

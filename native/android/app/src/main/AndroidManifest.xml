@@ -8,6 +8,7 @@
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" /><category android:name="android.intent.category.DEFAULT" /><category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="https" android:host="edgedirect2u.com" android:pathPrefix="${appLinkPath}" />
+                <data android:scheme="https" android:host="edgedirect2u.vercel.app" android:pathPrefix="${appLinkPath}" />
             </intent-filter>
         </activity>
     </application>

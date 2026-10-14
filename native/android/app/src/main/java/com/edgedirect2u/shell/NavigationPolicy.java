@@ -5,10 +5,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Arrays;
 public final class NavigationPolicy {
+    public static final String HOME="https://edgedirect2u.vercel.app";
     private static final Set<String> PAYMENTS=Collections.unmodifiableSet(new HashSet<>(Arrays.asList("checkout.paystack.com", "paystack.com")));
     private NavigationPolicy() {}
     public static boolean internal(String value) {
-        try { URI uri=new URI(value);return "https".equalsIgnoreCase(uri.getScheme())&&"edgedirect2u.com".equalsIgnoreCase(uri.getHost())&&uri.getUserInfo()==null&&(uri.getPort()==-1||uri.getPort()==443); } catch(Exception error) { return false; }
+        try { URI uri=new URI(value);return "https".equalsIgnoreCase(uri.getScheme())&&("edgedirect2u.com".equalsIgnoreCase(uri.getHost())||"edgedirect2u.vercel.app".equalsIgnoreCase(uri.getHost()))&&uri.getUserInfo()==null&&(uri.getPort()==-1||uri.getPort()==443); } catch(Exception error) { return false; }
     }
     public static boolean external(String value, boolean gesture) {
         try { URI uri=new URI(value);if(uri.getUserInfo()!=null)return false;String scheme=uri.getScheme();if(gesture&&("tel".equals(scheme)||"mailto".equals(scheme)||"geo".equals(scheme)))return true;return "https".equalsIgnoreCase(scheme)&&uri.getHost()!=null&&(gesture||PAYMENTS.contains(uri.getHost().toLowerCase(java.util.Locale.ROOT))); }catch(Exception error){return false;}

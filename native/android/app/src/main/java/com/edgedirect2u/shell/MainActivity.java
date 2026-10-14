@@ -28,7 +28,7 @@ public final class MainActivity extends ComponentActivity {
     private WebView browser;
     private ProgressBar progress;
     private LinearLayout errorPanel;
-    private String lastInternalUrl="https://edgedirect2u.com"+BuildConfig.START_PATH;
+    private String lastInternalUrl=NavigationPolicy.HOME+BuildConfig.START_PATH;
     private ValueCallback<Uri[]> photoCallback;
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
