@@ -24,6 +24,8 @@ Configure the Paystack webhook at `/api/payments/webhook`, run a test payment an
 
 ## Auth email links
 
+The connected project reference is `itdpkfnuyxzqswctlsar`; its dashboard display name may differ. Open https://supabase.com/dashboard/project/itdpkfnuyxzqswctlsar while signed in with the Supabase account that owns or has access to it. Store administrator access and Supabase dashboard access are separate. The current dashboard account lists other project references and redirects away from the connected project. Its database/public API remain available, so keep the existing application configuration. If another person or website builder supplied this project's credentials, recover access through that owner or Supabase support before changing authentication settings. Database credentials and the project's service-role key do not provide dashboard organization membership.
+
 Configure Supabase Auth's Site URL and redirect allowlist for the intended canonical HTTPS domain. The app supports PKCE code exchange and token-hash links through `/auth/confirm`.
 
 For links that also work when opened on another device, configure these Supabase email templates:

@@ -1,5 +1,9 @@
 # Paystack configuration and reconciliation
 
+## Shared account confirmed by the owner
+
+On 14 October 2026, the owner confirmed that Edgedirect2u and the existing Nexzek WooCommerce store use the same Paystack account. A read-only check of Paystack's webhook event API confirmed that the latest event was delivered to `https://nexzektechnology.com/wc-api/Tbz_WC_Paystack_Webhook/` with HTTP 200. Preserve that dashboard setting. Do not replace it with the Edgedirect2u endpoint: a shared event router or a separate Paystack business must be commissioned first. Server verification after a customer returns to Edgedirect2u already exists; automatic notifications for customers who do not return remain an outstanding launch requirement. No webhook routing change or financial transaction was performed during this check.
+
 Use a staging Supabase project and Paystack test key first. Configure `PAYSTACK_SECRET_KEY` on the server and set `NEXT_PUBLIC_SITE_URL` to the canonical origin.
 
 Set the webhook URL in Paystack to `https://YOUR_DOMAIN/api/payments/webhook`. The return URL is `/checkout/confirmation?reference=…`. The webhook must be reachable over HTTPS. A redirect never marks an order paid.
