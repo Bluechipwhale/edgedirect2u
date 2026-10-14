@@ -1,5 +1,7 @@
 # Start your Edgedirect2u store
 
+The web app is live at https://edgedirect2u.vercel.app. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger setup and custom-domain registration remain separate steps.
+
 ## Put the website online
 
 1. In Hostinger, open **Websites → Create Website → Web App → Import Git Repository**.
@@ -40,7 +42,7 @@ Ordinary authenticated admin work and raster photo uploads already use Supabase 
 
 ## Install the apps
 
-The [GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.0) contains the store APK, driver APK, Windows x64 installer and SHA-256 checksums. The website's `/apps` page links to them and also offers browser installation. The native clients load the live website at `edgedirect2u.com`; deploy it first.
+The [GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.1) contains the store APK, driver APK, Windows x64 installer and SHA-256 checksums. The website's `/apps` page links to them and also offers browser installation. Version 1.0.1 native clients load the live website at `edgedirect2u.vercel.app`; they also trust the future custom origin.
 
 The Windows installer is unsigned. Android packages use the project's release signing certificate. Driver users need an authorized driver account and assigned deliveries. Merchant sign-in opens its own workspace. Administrator privileges remain checked on the server in every client.
 

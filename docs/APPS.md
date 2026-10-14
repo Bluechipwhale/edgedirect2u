@@ -1,11 +1,11 @@
 # Web, Android and Windows apps
 
-The web app remains the source of truth. Hostinger runs the Next.js server; Supabase stores accounts, products and delivery data. Native clients load the same secure HTTPS app. Updating the hosted website updates their shopping and operations screens without another APK/EXE release.
+The web app remains the source of truth. The production deployment is live at https://edgedirect2u.vercel.app and connected to the original GitHub repository. Supabase stores accounts, products and delivery data. Version 1.0.1 native clients open this verified live origin; the custom edgedirect2u.com origin also remains trusted. Hostinger is being prepared as a second deployment. Updating the hosted website updates their shopping and operations screens without another APK/EXE release.
 
 ## Administrator access and uploads
 
-1. Deploy GitHub branch `main` to Hostinger with the settings in `HOSTINGER.md`, then attach `edgedirect2u.com`.
-2. Open `https://edgedirect2u.com/login`. Sign in as `olasodechukwudi@gmail.com` using the password you registered. That confirmed account already has administrator access and sign-in opens its workspace.
+1. The live administrator entry is https://edgedirect2u.vercel.app/login. Hostinger setup and the custom domain are separate launch steps.
+2. Open `https://edgedirect2u.vercel.app/login`. Sign in as `olasodechukwudi@gmail.com` using the password you registered. That confirmed account already has administrator access and sign-in opens its workspace.
 3. Open `/admin/products` and choose **Add record**. Enter the product name; its slug is suggested automatically. Select a category and inventory owner, enter the price in naira, then upload a PNG/JPEG/WebP photo under 5 MB or paste an HTTPS image URL. Complete the description and save the product.
 4. Open `/admin/inventory` to receive actual units with a reason. New products have zero stock until received. Keep **Visible in storefront** enabled for approved products.
 5. Open `/admin/theme` for branding. Save draft, preview and publish when ready.
@@ -20,7 +20,7 @@ A single service worker stores only the generic offline page and public icons. A
 
 ## Android packages
 
-`native/android` produces `com.edgedirect2u.store` and `com.edgedirect2u.driver`. Both target Android API 36 and support Android 8/API 26 or newer. The shells permit internal navigation only to the exact canonical HTTPS origin. Payment links open the browser; verified HTTPS app links return store checkout confirmation to the existing app session. Deploy `/.well-known/assetlinks.json` through the web app before testing that return. Certificates are never bypassed and no native JavaScript bridge is exposed.
+`native/android` produces `com.edgedirect2u.store` and `com.edgedirect2u.driver`. Both target Android API 36 and support Android 8/API 26 or newer. The shells permit internal navigation only to the two explicitly trusted HTTPS origins. Payment links open the browser; verified HTTPS app links return store checkout confirmation to the existing app session. Deploy `/.well-known/assetlinks.json` through the web app before testing that return. Certificates are never bypassed and no native JavaScript bridge is exposed.
 
 Release signing uses four encrypted repository Actions secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`. The first release key is backed up locally in ignored `.data/native-signing`; preserve that folder securely to maintain update continuity. Never commit it. Debug builds use separate `.debug` package IDs and are not distributed as releases.
 
