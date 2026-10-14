@@ -1,0 +1,75 @@
+name: Verify published Android connectivity
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  online:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Fetch the published signed applications
+        run: |
+          mkdir -p artifacts/online
+          for app in Store Driver; do
+            curl --fail --location --retry 3 "https://github.com/Bluechipwhale/edgedirect2u/releases/download/v1.0.1/Edgedirect2u-$app.apk" -o "artifacts/online/$app.apk"
+          done
+          printf '%s  %s\n' 'dce32e5924352a35f8af1572c5571901397904fd1b7ae71e4c2e89b97ac6f048' 'artifacts/online/Store.apk' 'd658cd5a18028ee2b77ec6c20b629d0a68b9558549fcc133d6d3a2cb7f554a2a' 'artifacts/online/Driver.apk' | sha256sum --check -
+          curl --fail --retry 3 https://edgedirect2u.vercel.app/api/health
+      - name: Prepare emulator
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_17_X64" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME_17_X64/bin" >> "$GITHUB_PATH"
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "system-images;android-35;google_apis;x86_64" "emulator"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+      - name: Verify both published apps render the live workspace
+        run: |
+          sudo chmod a+rw /dev/kvm
+          export ANDROID_USER_HOME="$RUNNER_TEMP/edge-android"
+          export ANDROID_EMULATOR_HOME="$ANDROID_USER_HOME"
+          export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
+          mkdir -p "$ANDROID_AVD_HOME"
+          echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeOnline --path "$ANDROID_AVD_HOME/EdgeOnline.avd" --package "system-images;android-35;google_apis;x86_64" --force
+          "$ANDROID_HOME/emulator/emulator" -avd EdgeOnline -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader -memory 2048 -dns-server 8.8.8.8,8.8.4.4 > artifacts/online/emulator.log 2>&1 &
+          trap 'adb -s emulator-5554 logcat -d -v brief chromium:W cr_WebView:W AndroidRuntime:E "*:S" > artifacts/online/webview.log; adb -s emulator-5554 emu kill || true' EXIT
+          timeout 120s adb -s emulator-5554 wait-for-device
+          ready=false
+          for attempt in $(seq 1 120); do
+            if [ "$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; then ready=true; break; fi
+            sleep 2
+          done
+          [ "$ready" = true ] || exit 1
+          adb -s emulator-5554 shell svc wifi enable
+          adb -s emulator-5554 shell input keyevent 82
+          adb -s emulator-5554 shell date -u
+          passed=true
+          for app in Store Driver; do
+            package="com.edgedirect2u.$(echo "$app" | tr '[:upper:]' '[:lower:]')"
+            if [ "$app" = Store ]; then expected='Your everyday.'; else expected='Your delivery day'; fi
+            adb -s emulator-5554 install -r "artifacts/online/$app.apk"
+            loaded=false
+            for attempt in $(seq 1 24); do
+              if [ "$attempt" = 1 ] || [ "$attempt" = 13 ]; then
+                adb -s emulator-5554 shell am force-stop "$package"
+                adb -s emulator-5554 shell am start -W -n "$package/com.edgedirect2u.shell.MainActivity"
+              fi
+              sleep 5
+              adb -s emulator-5554 shell uiautomator dump /sdcard/edge-window.xml >/dev/null 2>&1 || true
+              adb -s emulator-5554 pull /sdcard/edge-window.xml "artifacts/online/$app.xml" >/dev/null 2>&1 || true
+              if grep -Fq "$expected" "artifacts/online/$app.xml" 2>/dev/null; then loaded=true; break; fi
+            done
+            adb -s emulator-5554 exec-out screencap -p > "artifacts/online/$app.png"
+            if [ "$loaded" != true ]; then echo "::error::$app did not render its live workspace"; passed=false; else echo "$app live workspace rendered"; fi
+          done
+          adb -s emulator-5554 shell dumpsys connectivity > artifacts/online/connectivity.txt
+          [ "$passed" = true ]
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: published-android-online
+          path: |
+            artifacts/online/*.png
+            artifacts/online/*.xml
+            artifacts/online/*.log
+            artifacts/online/connectivity.txt
