@@ -1,0 +1,12 @@
+.env*
+!.env.example
+.data/
+.git/
+node_modules/
+.next/
+.next-*/
+artifacts/
+test-results/
+playwright-report/
+native/
+*.tsbuildinfo

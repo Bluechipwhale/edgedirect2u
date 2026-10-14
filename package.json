@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node --use-system-ca node_modules/next/dist/bin/next dev --hostname 127.0.0.1",
     "build": "node --use-system-ca node_modules/next/dist/bin/next build",
+    "build:vercel": "node scripts/prepare-hostinger.cjs && npm run build",
     "start": "node --use-system-ca node_modules/next/dist/bin/next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",

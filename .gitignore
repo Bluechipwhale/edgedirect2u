@@ -60,3 +60,6 @@ next-env.d.ts
 *.key
 *.apk
 *.aab
+
+.vercel
+.env*
