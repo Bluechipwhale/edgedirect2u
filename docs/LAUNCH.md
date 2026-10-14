@@ -1,12 +1,14 @@
 # Connected marketplace handoff
 
+**14 October 2026:** the app is live at https://edgedirect2u.vercel.app, with GitHub automatic deployments and v1.0.1 native downloads. Vercel has the server-only Supabase and live Paystack keys. Live health and a signed no-op webhook passed; no payment or refund has been performed. Hostinger upload, Supabase email-link configuration and Paystack dashboard routing are still being commissioned. Use the live Vercel origin for current links; the requested custom domain needs registration before it can serve traffic. See [START-HERE.md](START-HERE.md) for current access instructions. Earlier dated records below describe the predeployment state.
+
 The supplied Supabase project is connected. Eight forward migrations are applied, with a checksum ledger in the private `edge_deploy` schema. Six editorial categories are available; no sample products, merchant businesses, orders or customer accounts were inserted. The public API can read published settings and categories, while anonymous private profile reads and dashboard RPC calls are denied.
 
 The CA certificate supplied by the owner matches Supabase's official certificate. The database URL is correctly encoded and stored only in ignored `.env.local`. Deployment tools use verified TLS. `DATABASE_URL` and `DATABASE_CA_PATH` are deployment-machine values; the web application uses Supabase's HTTPS API.
 
 ## Administrator
 
-The owner selected `olasodechukwudi@gmail.com`. Register this account through `/register` and confirm its email. A trusted database owner then runs:
+The owner selected `olasodechukwudi@gmail.com`. This account is already confirmed and has administrator access. Sign in at https://edgedirect2u.vercel.app/login using its registered password. For a new project, register and confirm the chosen owner before a trusted database owner runs:
 
 ```sh
 node scripts/operations.cjs --admin-email olasodechukwudi@gmail.com
@@ -63,6 +65,6 @@ Browser tests launch a separate loopback server on port 3100, use `.data/e2e.sql
 
 The source includes a CI workflow for lint, types, unit/database tests, production dependency audit, browser flows and standalone packaging. The five development dependency audit findings in the existing Next lint toolchain remain unresolved; there is no compatible upstream fix reported by npm. Production dependency audit reports no vulnerabilities.
 
-The owner confirmed Hostinger and the canonical domain `edgedirect2u.com`. The prepared source archive is `artifacts/hostinger-source.zip`; its SHA-256 checksum is alongside it. The ZIP now includes a generated `.env.production` containing only the approved HTTPS origin, Supabase public URL/publishable key and `LOCAL_DEMO=false`. Hostinger's Next.js build automatically loads those values, so the uploaded application reads the same Supabase database. No data import or PostgreSQL credentials are needed on Hostinger. Server secrets remain excluded. No usable hosting account access has been supplied, so the app has not been published. See `HOSTINGER.md` for upload steps and add server keys before payment/upload acceptance. The local build does not certify business launch readiness.
+The owner confirmed Hostinger and the intended domain `edgedirect2u.com`. The prepared source archive is `artifacts/hostinger-source.zip`; its SHA-256 checksum is alongside it. The ZIP includes a generated `.env.production` containing only public configuration. Override `NEXT_PUBLIC_SITE_URL` with the actual Hostinger HTTPS address before building on a temporary domain. The uploaded application reads the same Supabase database; no data import or PostgreSQL credentials are needed on Hostinger. Server secrets remain excluded and must be configured privately on that host. Hostinger is signed in; source selection is awaiting the browser's file picker. The separate Vercel deployment is live. See `HOSTINGER.md` for deployment settings. A successful build does not certify business launch readiness.
 
 Verification on 12 October 2026: lint, types, 50 unit/database tests, all 10 browser flows, final standalone packaging and the live-database production smoke test passed. Launch configuration still correctly reports missing service-role/payment keys and the local HTTP origin. Local `.env.local` deliberately retains the loopback origin; the host must use the canonical HTTPS origin.

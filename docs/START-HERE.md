@@ -2,7 +2,7 @@
 
 The web app is live at https://edgedirect2u.vercel.app. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger setup and custom-domain registration remain separate steps.
 
-## Put the website online
+## Add a Hostinger deployment
 
 1. In Hostinger, open **Websites → Create Website → Web App → Import Git Repository**.
 2. Choose `https://github.com/Bluechipwhale/edgedirect2u`, branch `main`, root directory. Connect your GitHub account for automatic updates on future pushes.
@@ -21,14 +21,14 @@ The web app is live at https://edgedirect2u.vercel.app. Sign in at https://edged
 
 Keep Hostinger's assigned `PORT`. The approved public Supabase connection is already included in the build configuration. No database import is needed. Use Hostinger Business or Cloud hosting with Node.js support.
 
-4. Deploy, then attach `edgedirect2u.com` and enable HTTPS using the domain settings. Check `https://edgedirect2u.com/api/health`; `status: "ok"` means the server can read Supabase.
-5. In Supabase Authentication URL settings, set the Site URL to `https://edgedirect2u.com` and allow the confirmation URL described in [HOSTINGER.md](HOSTINGER.md).
+4. Set `NEXT_PUBLIC_SITE_URL` to the exact HTTPS origin Hostinger assigns before building. This is necessary for sign-in and protected submissions. Deploy and check `/api/health`; `status: "ok"` means the server can read Supabase.
+5. Register and attach `edgedirect2u.com` before using it as the canonical origin. The domain was shown as available for purchase during setup; it is not serving this app. Until then, use the live Vercel address above. In Supabase Authentication URL settings, use that live address as the Site URL and allow `/auth/confirm`, following [LAUNCH.md](LAUNCH.md).
 
-The repository and installers are prepared separately from hosting. The website is not live until the Hostinger deployment is completed.
+The website is already live on Vercel. A Hostinger deployment reads the same Supabase database; no database copy is needed.
 
 ## Add your first product
 
-Open `https://edgedirect2u.com/login`. Sign in as **olasodechukwudi@gmail.com** using the password you registered. This confirmed account already has administrator access; successful sign-in opens the admin workspace.
+Open https://edgedirect2u.vercel.app/login. Sign in as **olasodechukwudi@gmail.com** using the password you registered. This confirmed account already has administrator access; successful sign-in opens the admin workspace.
 
 Open `/admin/products`, choose **Add record**, enter the name, select a category and inventory owner, enter the price in **naira**, upload the photo and save. Open `/admin/inventory` to receive actual stock. Products start with zero stock. Use `/admin/theme` to preview and publish branding changes.
 
@@ -36,7 +36,7 @@ You can start uploading before deployment: run `npm run dev` on your computer an
 
 ## Enable payments
 
-Add `SUPABASE_SERVICE_ROLE_KEY` and `PAYSTACK_SECRET_KEY` privately in Hostinger environment settings and redeploy. Use Paystack test mode until checkout and refunds are verified. Configure this app's webhook as `https://edgedirect2u.com/api/payments/webhook`. The existing WordPress webhook on `nexzektechnology.com` belongs to that separate WordPress integration.
+The Supabase service key and live Paystack key are configured privately on Vercel. A signed connectivity event reached the live handler successfully; no payment or refund was performed. Add the required server settings privately to Hostinger before enabling checkout there. Complete payment/refund acceptance using test mode and a staging database first. This app's current webhook endpoint is `https://edgedirect2u.vercel.app/api/payments/webhook`. The existing WordPress webhook on `nexzektechnology.com` belongs to that separate integration; decide how the Paystack account is shared before replacing it.
 
 Ordinary authenticated admin work and raster photo uploads already use Supabase access policies and do not need the service-role key.
 

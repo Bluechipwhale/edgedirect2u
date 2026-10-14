@@ -1,5 +1,13 @@
 # Implementation status and architecture
 
+## Live deployment verified 14 October 2026
+
+The storefront is published at https://edgedirect2u.vercel.app and connected to GitHub `main` for automatic deployments. The homepage, database health, app downloads and Android association file returned HTTP 200. The confirmed owner account has the admin role. Supabase service credentials and the owner's valid live Paystack key are set privately on Vercel. A correctly signed no-op event returned `received: true` from the deployed webhook without changing orders or charging money. The database reservation scheduler's latest three runs succeeded.
+
+GitHub verification passed for commit `8775c37`: lint, types, 50 unit/database/provider tests, 13 browser flows, production dependency audit and standalone build. Native build run `38624044098` passed Android tests, emulator launch, Windows build/renderer smoke and release publication. Release v1.0.1 contains both signed APKs and the unsigned Windows x64 installer; all load the live Vercel origin.
+
+Hostinger upload is awaiting browser file selection. The current Supabase dashboard login shows different projects, so the owner must select the account that owns this project before email-link configuration can be completed. Paystack dashboard webhook routing and real payment/refund acceptance remain unverified. No active products have been added. The requested custom domain was shown as available for purchase and is not serving the app. Earlier dated verification below describes the state on those earlier dates.
+
 ## Verification recorded 12 October 2026
 
 Lint, standalone type checking and production compilation passed. Vitest passed **50 tests** across business logic, trusted provider handling and migration-backed PostgreSQL tests. Playwright passed **10 browser flows** against the isolated local sandbox, including mobile layouts, actual theme publication/rollback, recovery, saved addresses, cross-tab shopping state and injected-script blocking. No live payment or external app deployment was performed.
@@ -28,7 +36,7 @@ RLS and RPC checks protect customer records, merchant private accounts/allocatio
 - Configure Hostinger Node 24, canonical domain/HTTPS, environment values, backups and operational monitoring. Reservation expiry is scheduled inside Supabase; inspect its executions before launch.
 - Supply approved product data/photography, accurate delivery fees, business policies and support contacts. Fixture photography is not a representation of stocked business goods.
 
-These steps require business account access that was not supplied. Presence of credentials in Settings is not a connectivity or readiness certification.
+Complete the remaining dashboard configuration and business acceptance against the actual services. Presence of credentials in Settings is not a readiness certification.
 
 ## Explicit scope boundaries
 
