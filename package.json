@@ -20,7 +20,7 @@
     "check:production": "node --use-system-ca scripts/smoke-production.cjs",
     "ops:status": "node scripts/operations.cjs",
     "ops:schedule": "node scripts/operations.cjs --schedule",
-    "build:hostinger": "node scripts/prepare-hostinger.cjs && npm run build && node scripts/package-standalone.cjs"
+    "build:hostinger": "node scripts/prepare-hostinger.cjs && npm run build -- --webpack && node scripts/package-standalone.cjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
