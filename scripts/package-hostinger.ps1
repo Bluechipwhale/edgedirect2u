@@ -13,11 +13,28 @@ $publicEnvText = ($allowedNames | ForEach-Object { "$_=$($publicConfig.$_)" }) -
 $publicEnvText += "`n"
 $sourcePaths = $sourceNames | ForEach-Object { Join-Path $projectRoot $_ }
 New-Item -ItemType Directory -Path (Split-Path -Parent $releasePath) -Force | Out-Null
-Compress-Archive -LiteralPath $sourcePaths -DestinationPath $releasePath -CompressionLevel Optimal -Force
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$releaseArchive = [System.IO.Compression.ZipFile]::Open($releasePath, [System.IO.Compression.ZipArchiveMode]::Update)
+if (Test-Path -LiteralPath $releasePath) { Remove-Item -LiteralPath $releasePath }
+$releaseArchive = [System.IO.Compression.ZipFile]::Open($releasePath, [System.IO.Compression.ZipArchiveMode]::Create)
 try {
+    foreach ($sourcePath in $sourcePaths) {
+        $sourceItem = Get-Item -LiteralPath $sourcePath -Force
+        $items = @($sourceItem)
+        if ($sourceItem.PSIsContainer) { $items += @(Get-ChildItem -LiteralPath $sourcePath -Recurse -Force) }
+        foreach ($item in $items) {
+            $entryName = $item.FullName.Substring($projectRoot.Length).TrimStart('\', '/').Replace('\', '/')
+            if ($item.PSIsContainer) {
+                $entry = $releaseArchive.CreateEntry("$entryName/")
+                $entry.ExternalAttributes = [Convert]::ToInt32('41ed0010', 16) # directory, 0755
+            } else {
+                $entry = [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($releaseArchive, $item.FullName, $entryName, [System.IO.Compression.CompressionLevel]::Optimal)
+                $entry.ExternalAttributes = [Convert]::ToInt32('81a40000', 16) # regular file, 0644
+            }
+        }
+    }
     $envEntry = $releaseArchive.CreateEntry('.env.production')
+    $envEntry.ExternalAttributes = [Convert]::ToInt32('81a40000', 16)
     $envWriter = [System.IO.StreamWriter]::new($envEntry.Open(), [System.Text.UTF8Encoding]::new($false))
     try { $envWriter.Write($publicEnvText) } finally { $envWriter.Dispose() }
 } finally { $releaseArchive.Dispose() }
@@ -38,6 +55,9 @@ if (Test-Path -LiteralPath $localEnvPath) {
 $archive = [System.IO.Compression.ZipFile]::OpenRead($releasePath)
 try {
     foreach ($entry in $archive.Entries) {
+        if ($entry.FullName.Contains('\')) { throw 'Archive paths must use portable forward slashes' }
+        $expectedAttributes = if ($entry.FullName.EndsWith('/')) { [Convert]::ToInt32('41ed0010', 16) } else { [Convert]::ToInt32('81a40000', 16) }
+        if ($entry.ExternalAttributes -ne $expectedAttributes) { throw "Unsafe archive permissions: $($entry.FullName)" }
         $entryPath = $entry.FullName.Replace('\', '/')
         if ($entryPath -match '(^|/)(node_modules|\.data|\.git|\.next|\.next-e2e|artifacts|test-results)/' -or ($entryPath -match '(^|/)\.env' -and $entryPath -notin @('.env.example', '.env.production'))) {
             throw "Unexpected private or generated file in release: $entryPath"
