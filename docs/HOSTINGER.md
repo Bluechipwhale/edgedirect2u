@@ -1,5 +1,7 @@
 # Hostinger Business deployment
 
+**Live deployment, 14 October 2026:** https://maroon-mink-604054.hostingersite.com uses Node 24, Next.js, `npm run build:hostinger` and output `.next`. The build uses Webpack with the same Tailwind loader because Turbopack's CSS subprocess could not start on this host. Seven environment settings were imported privately, including the exact temporary origin, public Supabase configuration, service/payment keys, `LOCAL_DEMO=false` and `HOSTNAME=0.0.0.0`. Health, signed no-op webhook, protected management, downloads and desktop rendering passed. This is a source ZIP deployment; GitHub auto-deploy is active on Vercel, not this Hostinger site. Domain examples below apply after registration and DNS attachment.
+
 Hostinger currently documents Node.js Web Apps on Business and Cloud plans, including Next.js and Node 24. Deploy through that facility in hPanel. This app needs a Node server for authentication, payment APIs and server rendering. [Hostinger Node.js setup](https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/).
 
 ## Prepare the release
@@ -43,4 +45,4 @@ On HTTPS, test registration, sign-in/out, a Storage logo upload, theme draft iso
 
 Theme settings are server-loaded per render. Private routes and APIs send no-store headers; host/CDN rules must preserve them. Monitor process limits and image processing resource use.
 
-No Hostinger deployment or domain change was performed during development. Confirm startup settings in the actual account before publishing.
+Hostinger deployment is complete at the temporary HTTPS address above. No domain purchase or DNS change was performed. Supabase email settings, Paystack dashboard routing, real payment/refund acceptance and approved product data remain commissioning steps.

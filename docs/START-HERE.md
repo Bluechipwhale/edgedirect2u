@@ -1,6 +1,6 @@
 # Start your Edgedirect2u store
 
-The web app is live at https://edgedirect2u.vercel.app. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger setup and custom-domain registration remain separate steps.
+The web app is live at https://edgedirect2u.vercel.app and https://maroon-mink-604054.hostingersite.com. Both read the same Supabase database. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger currently uses the verified source ZIP; its GitHub integration is not connected. Custom-domain registration remains separate.
 
 ## Add a Hostinger deployment
 

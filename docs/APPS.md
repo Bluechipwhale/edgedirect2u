@@ -1,10 +1,10 @@
 # Web, Android and Windows apps
 
-The web app remains the source of truth. The production deployment is live at https://edgedirect2u.vercel.app and connected to the original GitHub repository. Supabase stores accounts, products and delivery data. Version 1.0.1 native clients open this verified live origin; the custom edgedirect2u.com origin also remains trusted. Hostinger is being prepared as a second deployment. Updating the hosted website updates their shopping and operations screens without another APK/EXE release.
+The web app remains the source of truth. The production deployment is live at https://edgedirect2u.vercel.app with automatic deployments from the original GitHub repository. A second deployment is live at https://maroon-mink-604054.hostingersite.com using source ZIP uploads. Supabase stores shared accounts, products and delivery data. Version 1.0.1 native clients open the verified Vercel origin; the custom edgedirect2u.com origin also remains trusted. Updating the Vercel website updates their shopping and operations screens without another APK/EXE release. Both published APKs have rendered their live pages in the connectivity workflow.
 
 ## Administrator access and uploads
 
-1. The live administrator entry is https://edgedirect2u.vercel.app/login. Hostinger setup and the custom domain are separate launch steps.
+1. The live administrator entry is https://edgedirect2u.vercel.app/login. The same account also works at the Hostinger site's `/login`; sessions are separate for each domain.
 2. Open `https://edgedirect2u.vercel.app/login`. Sign in as `olasodechukwudi@gmail.com` using the password you registered. That confirmed account already has administrator access and sign-in opens its workspace.
 3. Open `/admin/products` and choose **Add record**. Enter the product name; its slug is suggested automatically. Select a category and inventory owner, enter the price in naira, then upload a PNG/JPEG/WebP photo under 5 MB or paste an HTTPS image URL. Complete the description and save the product.
 4. Open `/admin/inventory` to receive actual units with a reason. New products have zero stock until received. Keep **Visible in storefront** enabled for approved products.

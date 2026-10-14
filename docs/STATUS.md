@@ -6,7 +6,11 @@ The storefront is published at https://edgedirect2u.vercel.app and connected to 
 
 GitHub verification passed for commit `8775c37`: lint, types, 50 unit/database/provider tests, 13 browser flows, production dependency audit and standalone build. Native build run `38624044098` passed Android tests, emulator launch, Windows build/renderer smoke and release publication. Release v1.0.1 contains both signed APKs and the unsigned Windows x64 installer; all load the live Vercel origin.
 
-Hostinger upload is awaiting browser file selection. The current Supabase dashboard login shows different projects, so the owner must select the account that owns this project before email-link configuration can be completed. Paystack dashboard webhook routing and real payment/refund acceptance remain unverified. No active products have been added. The requested custom domain was shown as available for purchase and is not serving the app. Earlier dated verification below describes the state on those earlier dates.
+Hostinger is also live at https://maroon-mink-604054.hostingersite.com. The successful build uses source commit `3869d29`, Node 24 and Webpack with the same Tailwind loader; archive paths and permissions are portable to Linux. Homepage, health, login, current downloads and app associations returned HTTP 200, signed no-op webhook returned 200, and unauthenticated management access returned 401. Desktop rendering was inspected in the browser. Both hosts share the database and have private server settings. Hostinger uses ZIP deployments; Vercel uses automatic GitHub deployments.
+
+Published APK connectivity run `38627757860` verified the exact release checksums and rendered the live storefront and driver sign-in page in an emulator. Complete web verification also passed for `3869d29`, including the Hostinger Webpack build.
+
+The current Supabase dashboard login shows different projects, so the owner must select the account that owns this project before email-link/SMTP configuration can be verified. Email confirmations are required and anonymous sign-in is disabled. Paystack dashboard webhook routing and real payment/refund acceptance remain unverified. No active products have been added. The requested custom domain was shown as available for purchase and is not serving the app. Earlier dated verification below describes the state on those earlier dates.
 
 ## Verification recorded 12 October 2026
 
