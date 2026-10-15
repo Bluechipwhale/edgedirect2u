@@ -39,7 +39,7 @@ For links that also work when opened on another device, configure these Supabase
 <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Choose a new password</a>
 ```
 
-Expired links return to `/forgot-password`. Configure business SMTP and verify actual email delivery. Anonymous checkout remains an optional Supabase Auth setting; require sign-in when it is disabled.
+Expired links return to `/forgot-password`. Configure business SMTP and verify actual email delivery. Customers can browse publicly, but checkout always requires a registered, non-anonymous account. The API and database enforce this before any reservation.
 
 ## Reservation expiry
 

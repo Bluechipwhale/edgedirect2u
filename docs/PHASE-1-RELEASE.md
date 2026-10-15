@@ -5,10 +5,12 @@
 - Vercel: https://edgedirect2u.vercel.app
 - Hostinger: https://maroon-mink-604054.hostingersite.com
 - GitHub main: https://github.com/Bluechipwhale/edgedirect2u; pull request #1 merged at `c73d283`.
-- Supabase: migrations 009–013 applied with verified TLS and migration checksums. No development catalogue or test accounts were inserted.
+- Supabase: migrations 009–014 applied with verified TLS and migration checksums. No development catalogue or test accounts were inserted.
 - Installers: https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2. The signed Android packages retain their original identities and certificate. The Windows installer is unsigned.
 
 Both web hosts use the same live database. Hostinger currently uses the validated source ZIP; Vercel deploys GitHub main automatically. The requested custom domain is not registered or connected by this release.
+
+The storefront now includes an editorial hero and clearer mobile category cards. Products and bags remain public; registered-account sign-in is required for checkout, with the bag and checkout destination retained. Both the web API and the SQL entry point reject anonymous checkout before stock is reserved.
 
 The local preview at http://127.0.0.1:3000 also reads the shared database; authorized admin edits there affect the live data. Automated write tests use isolated fixtures. Heavy release builds run in GitHub because the workstation's C: drive has less than 300 MB free.
 
