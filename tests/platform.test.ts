@@ -30,6 +30,24 @@ it('isolates company rows, memberships, stores, roles and all direct writes',asy
   await as(adminA,async()=>{const companies=await db.query('select id from platform_companies');expect(companies.rows).toEqual([{id:companyA}]);expect((await db.query('select id from field_stores')).rows).toEqual([{id:storeA}]);expect((await db.query('select user_id from platform_memberships where company_id=$1',[companyB])).rows).toEqual([]);await expect(db.query("insert into platform_memberships(company_id,user_id,role) values($1,$2,'company_admin')",[companyB,adminA])).rejects.toThrow();await expect(db.query("select company_set_member($1,'person5@example.com','company_admin',true)",[companyB])).rejects.toThrow('Forbidden');});
   await as(outsider,async()=>{expect((await db.query('select * from field_visits')).rows).toEqual([]);expect((await db.query('select * from platform_companies')).rows).toEqual([]);});
 });
+it('lets only verified platform owners change company addresses and audits the selected company',async()=>{
+  const address='15 Emmanuel Olorunfemi, off College Road, Ogba, Lagos, Nigeria';
+  expect(await scalar("select address id from platform_companies where id='10000000-0000-4000-8000-000000000001'")).toBe(address);
+  await db.exec('set role anon');try{await expect(db.query('select platform_set_company_address($1,$2)',[companyA,address])).rejects.toThrow('permission denied');}finally{await db.exec('reset role');}
+  for(const user of [root,adminA,agentA,outsider])await as(user,()=>expect(db.query('select platform_set_company_address($1,$2)',[companyA,address])).rejects.toThrow('verified MFA'));
+  await as(adminA,()=>expect(db.query('select platform_set_company_address($1,$2)',[companyB,address])).rejects.toThrow('verified MFA'),'aal2');
+  await as(root,async()=>{
+    await expect(db.query('select platform_set_company_address($1,$2)',[companyA,'x'.repeat(501)])).rejects.toThrow('500 characters');
+    await expect(db.query('select platform_set_company_address($1,null)',[companyA])).rejects.toThrow('500 characters');
+    await expect(db.query('select platform_set_company_address($1,$2)',[outsider,address])).rejects.toThrow('Company unavailable');
+    await db.query('select platform_set_company_address($1,$2)',[companyA,`  ${address}  `]);
+  },'aal2');
+  expect(await scalar('select address id from platform_companies where id=$1',[companyA])).toBe(address);
+  expect(await scalar('select address id from platform_companies where id=$1',[companyB])).toBe('');
+  expect((await db.query("select actor,detail from platform_audit where company_id=$1 and action='company.address'",[companyA])).rows).toEqual([{actor:root,detail:{field:'address'}}]);
+  await as(adminA,()=>expect(db.query('update platform_companies set address=$2 where id=$1',[companyA,'Unauthorized address'])).rejects.toThrow('permission denied'));
+  await as(root,()=>db.query("select platform_set_company_address($1,'')",[companyA]),'aal2');
+});
 it('discovers only active authorized workspaces and scopes aggregate reports',async()=>{
   await as(agentA,async()=>{expect((await db.query('select slug from my_company_workspaces()')).rows).toEqual([{slug:'company-a'}]);expect((await db.query<{metrics:{planned:number;completed:number}}>('select company_metrics($1) metrics',[companyA])).rows[0].metrics).toMatchObject({planned:1,completed:0});await expect(db.query('select company_metrics($1)',[companyB])).rejects.toThrow('Forbidden');});
   await as(outsider,async()=>expect((await db.query('select * from my_company_workspaces()')).rows).toEqual([]));

@@ -4,7 +4,7 @@ import { themeSchema } from './theme';
 export const FLAGSHIP_ID='10000000-0000-4000-8000-000000000001';
 export const companyRoles=['company_admin','supervisor','field_agent','vendor','customer'] as const;
 export type CompanyRole=typeof companyRoles[number];
-export type Company={id:string;slug:string;name:string;active:boolean;package:string;brand:Theme;brand_draft:Theme;geofence_metres:number;daily_target:number;allow_web_checkin:boolean};
+export type Company={id:string;slug:string;name:string;address:string;active:boolean;package:string;brand:Theme;brand_draft:Theme;geofence_metres:number;daily_target:number;allow_web_checkin:boolean};
 export type CompanyMember={company_id:string;user_id:string;role:CompanyRole;active:boolean;label:string};
 export type FieldStore={id:string;company_id:string;name:string;address:string;latitude:number;longitude:number;radius_metres:number|null};
 export type Assignment={id:string;company_id:string;store_id:string;agent_id:string;visit_date:string};
@@ -15,6 +15,7 @@ const company={company_id:z.uuid()};
 export const platformCommand=z.discriminatedUnion('action',[
   z.object({action:z.literal('create-company'),slug:z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).min(2).max(60),name:z.string().trim().min(2).max(100),owner:z.email(),package:z.enum(['commerce','delivery','field_operations','enterprise'])}),
   z.object({action:z.literal('activation'),...company,active:z.boolean()}),
+  z.object({action:z.literal('company-address'),...company,address:z.string().trim().max(500)}),
   z.object({action:z.literal('member'),...company,email:z.email(),role:z.enum(companyRoles),active:z.boolean()}),
   z.object({action:z.literal('brand'),...company,operation:z.enum(['draft','publish','rollback']),config:themeSchema,version:z.uuid().optional()}),
   z.object({action:z.literal('policy'),...company,radius:z.number().int().min(25).max(1000),target:z.number().int().min(1).max(200),web:z.boolean()}),
