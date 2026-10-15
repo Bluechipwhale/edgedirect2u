@@ -23,7 +23,21 @@ test('email verification needs an explicit click and clears the token from brows
   await expect(page).toHaveURL(/\/auth\/verify$/);
   await expect(page.getByRole('button',{name:'Continue securely',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Continue securely',exact:true}).click();
-  await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);
+  await expect(page.getByRole('alert').filter({hasText:'expired or already been used'})).toBeVisible();
+  await expect(page.getByRole('link',{name:'Request a new link',exact:false})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Continue securely',exact:true})).toBeEnabled();
+});
+test('email verification submits a same-origin request without a referrer',async({page})=>{
+  await page.route('**/auth/confirm',async route=>{
+    const request=route.request();
+    expect(request.method()).toBe('POST');expect(request.headers().origin).toBe('http://127.0.0.1:3100');expect(request.headers().referer).toBeUndefined();
+    expect(new URLSearchParams(request.postData()!).get('type')).toBe('recovery');
+    await route.fulfill({json:{ok:true,redirect:'/reset-password?verified=1'}});
+  });
+  await page.goto('/auth/verify?token_hash=qa-single-use-email-token-hash&type=recovery');
+  await expect(page).toHaveURL(/\/auth\/verify$/);
+  await page.getByRole('button',{name:'Continue securely',exact:true}).click();
+  await expect(page).toHaveURL(/\/reset-password\?verified=1$/);
 });
 test('checkout sign-in preserves the bag and registration destination',async({page})=>{
   await page.goto('/products/sculpture-table-lamp');await page.getByRole('button',{name:'Add to bag',exact:true}).click();

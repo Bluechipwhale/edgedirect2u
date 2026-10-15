@@ -56,6 +56,12 @@ it('keeps development form redirects on the configured browser origin too',async
   const response=await confirmEmail(new Request('http://localhost:3100/auth/confirm',{method:'POST',headers:{host:'127.0.0.1:3100',origin:'http://127.0.0.1:3100','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token_hash:'qa-single-use-email-token-hash',type:'recovery'})}));
   expect(response.headers.get('location')).toBe('http://127.0.0.1:3100/forgot-password?expired=1');
 });
+it('returns a safe local JSON destination for the browser verification form',async()=>{
+  auth.verifyOtp.mockResolvedValue({error:null});
+  const response=await confirmEmail(new Request(`${origin}/auth/confirm`,{method:'POST',headers:{origin,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token_hash:'qa-single-use-email-token-hash',type:'recovery'})}));
+  expect(await response.json()).toEqual({ok:true,redirect:'/reset-password?verified=1'});
+  expect(response.headers.get('cache-control')).toContain('no-store');
+});
 it('rejects cross-origin token submissions before verification and preserves only safe checkout returns',async()=>{
   auth.verifyOtp.mockResolvedValue({error:null});
   const submit=(requestOrigin:string,next:string)=>confirmEmail(new Request(`${origin}/auth/confirm`,{method:'POST',headers:{origin:requestOrigin,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token_hash:'qa-single-use-email-token-hash',type:'signup',next})}));

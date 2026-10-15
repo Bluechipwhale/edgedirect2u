@@ -28,6 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const origin = publicOrigin(request);
+  const json = request.headers.get('accept') === 'application/json';
   try {
     guard(request);
     if (!configured() || !request.headers.get('content-type')?.startsWith('application/x-www-form-urlencoded')) throw new Error('Invalid verification request');
@@ -37,8 +38,10 @@ export async function POST(request: Request) {
     const { error } = await (await supabase()).auth.verifyOtp({ token_hash: input.token_hash, type: input.type });
     if (error) throw error;
     const destination = input.type === 'recovery' ? '/reset-password?verified=1' : `/auth/verified${input.next === '/checkout' ? '?next=/checkout' : ''}`;
+    if (json) return NextResponse.json({ ok: true, redirect: destination }, { headers: { 'Cache-Control': 'private, no-store' } });
     return NextResponse.redirect(new URL(destination, origin), 303);
   } catch {
+    if (json) return NextResponse.json({ error: 'This email link has expired or already been used. Request a new link, or sign in if you have already finished.' }, { status: 400, headers: { 'Cache-Control': 'private, no-store' } });
     return NextResponse.redirect(new URL('/forgot-password?expired=1', origin), 303);
   }
 }
