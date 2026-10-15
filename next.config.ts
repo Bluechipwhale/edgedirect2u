@@ -11,6 +11,6 @@ const config: NextConfig = {
     config.module.rules.push({ test: /globals\.css$/, enforce: 'pre', use: ['@tailwindcss/turbopack'] });
     return config;
   },
-  async headers() { return [{ source: '/:path*', headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }, { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }, { key: 'X-Frame-Options', value: 'SAMEORIGIN' }, {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=()'}, ...(process.env.NODE_ENV==='production'&&process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://')?[{key:'Strict-Transport-Security',value:'max-age=31536000'}]:[])] }]; },
+  async headers() { return [{ source: '/:path*', headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }, { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }, { key: 'X-Frame-Options', value: 'SAMEORIGIN' }, {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=()'}, ...(process.env.NODE_ENV==='production'&&process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://')?[{key:'Strict-Transport-Security',value:'max-age=31536000'}]:[])] },{source:'/field/:path*',headers:[{key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=(self)'}]}]; },
 };
 export default config;

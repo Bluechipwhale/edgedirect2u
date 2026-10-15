@@ -12,12 +12,12 @@ internal sealed class StoreWindow : Form {
     private const string Home="https://edgedirect2u.vercel.app";
     private static readonly string OfflineUri="data:text/html;charset=utf-8;base64,"+Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(OfflinePage));
     private readonly WebView2 browser=new(){Dock=DockStyle.Fill};
-    private readonly Label location=new(){Text="EDGEDIRECT2U · YOUR EVERYDAY, WITH AN EDGE",AutoSize=true,ForeColor=Color.FromArgb(91,91,112),Margin=new Padding(18,14,0,0)};
+    private readonly Label location=new(){Text="E-EDGE DIRECT 2U · YOUR EVERYDAY, WITH AN EDGE",AutoSize=true,ForeColor=Color.FromArgb(91,91,112),Margin=new Padding(18,14,0,0)};
     private readonly string[] arguments;
     private readonly bool smoke;
     public StoreWindow(string[] args) {
         arguments=args;smoke=args.Contains("--smoke-test");
-        Text="Edgedirect2u Store";Width=1280;Height=850;MinimumSize=new Size(450,620);StartPosition=FormStartPosition.CenterScreen;BackColor=Color.FromArgb(248,248,252);Icon=System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+        Text="E-Edge Direct 2U Store";Width=1280;Height=850;MinimumSize=new Size(450,620);StartPosition=FormStartPosition.CenterScreen;BackColor=Color.FromArgb(250,250,249);Icon=System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         var toolbar=new FlowLayoutPanel{Dock=DockStyle.Top,Height=50,Padding=new Padding(10,4,10,4),BackColor=Color.White,WrapContents=false};
         Button ToolButton(string text,Action action){var button=new Button{Text=text,AutoSize=true,FlatStyle=FlatStyle.Flat,Height=36,BackColor=Color.FromArgb(243,239,255),ForeColor=Color.FromArgb(108,59,255)};button.FlatAppearance.BorderSize=0;button.Click+=(_,_)=>action();return button;}
         toolbar.Controls.Add(ToolButton("←",()=>{if(browser.CoreWebView2?.CanGoBack==true)browser.GoBack();}));
@@ -40,7 +40,7 @@ internal sealed class StoreWindow : Form {
             var settings=browser.CoreWebView2.Settings;settings.AreDevToolsEnabled=false;settings.IsWebMessageEnabled=false;settings.AreHostObjectsAllowed=false;settings.IsStatusBarEnabled=false;settings.UserAgent+=" Edgedirect2uNative/windows";
             browser.CoreWebView2.PermissionRequested+=(_,e)=>e.State=CoreWebView2PermissionState.Deny;
             browser.CoreWebView2.ServerCertificateErrorDetected+=(_,e)=>e.Action=CoreWebView2ServerCertificateErrorAction.Cancel;
-            browser.CoreWebView2.NavigationStarting+=(_,e)=>{SmokeLog("Navigation starting "+e.NavigationId+": "+(e.Uri==OfflineUri?"bundled reconnect screen":e.Uri));if(e.Uri=="about:blank"||e.Uri==OfflineUri)return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host!="checkout.paystack.com"&&new Uri(e.Uri).Host!="paystack.com"?"EDGEDIRECT2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
+            browser.CoreWebView2.NavigationStarting+=(_,e)=>{SmokeLog("Navigation starting "+e.NavigationId+": "+(e.Uri==OfflineUri?"bundled reconnect screen":e.Uri));if(e.Uri=="about:blank"||e.Uri==OfflineUri)return;if(!InApp(e.Uri)){e.Cancel=true;if(e.IsUserInitiated)External(e.Uri);}else location.Text=new Uri(e.Uri).Host!="checkout.paystack.com"&&new Uri(e.Uri).Host!="paystack.com"?"E-EDGE DIRECT 2U · SECURE ONLINE WORKSPACE":"PAYSTACK · SECURE CHECKOUT";};
             browser.CoreWebView2.NewWindowRequested+=(_,e)=>{e.Handled=true;if(InApp(e.Uri))browser.CoreWebView2.Navigate(e.Uri);else if(e.IsUserInitiated)External(e.Uri);};
             browser.CoreWebView2.NavigationCompleted+=async(_,e)=>{
                 if(e.WebErrorStatus==CoreWebView2WebErrorStatus.OperationCanceled){SmokeLog("Superseded navigation "+e.NavigationId);return;}
@@ -56,6 +56,6 @@ internal sealed class StoreWindow : Form {
         }
     }
     private const string OfflinePage="""
-    <!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px system-ui;color:#18182b;background:#f8f8fc;margin:0;min-height:100vh;display:grid;place-items:center}main{max-width:470px;margin:24px;padding:48px;border:1px solid #eae8f2;background:white;border-radius:24px}span{font-size:12px;font-weight:700;color:#6c3bff;letter-spacing:.1em}h1{font-size:42px;letter-spacing:-.06em;line-height:1.08}p{color:#6b6b80;line-height:1.7}a{display:inline-block;background:#6c3bff;color:white;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:600}</style><main><span>EDGEDIRECT2U · A LITTLE PAUSE</span><h1>Your next good find can wait.</h1><p>Reconnect to your secure online store. Orders and account updates require an internet connection.</p><a href="https://edgedirect2u.vercel.app">Reconnect to store ↗</a></main></html>
+    <!doctype html><html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:16px system-ui;color:#18182b;background:#fafaf9;margin:0;min-height:100vh;display:grid;place-items:center}main{max-width:470px;margin:24px;padding:48px;border:1px solid #eae8f2;background:white;border-radius:24px}span{font-size:12px;font-weight:700;color:#B93400;letter-spacing:.1em}h1{font-size:42px;letter-spacing:-.06em;line-height:1.08}p{color:#6b6b80;line-height:1.7}a{display:inline-block;background:#B93400;color:white;padding:14px 22px;border-radius:12px;text-decoration:none;font-weight:600}</style><main><span>E-EDGE DIRECT 2U · A LITTLE PAUSE</span><h1>Your next good find can wait.</h1><p>Reconnect to your secure online store. Orders and account updates require an internet connection.</p><a href="https://edgedirect2u.vercel.app">Reconnect to store ↗</a></main></html>
     """;
 }
