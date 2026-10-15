@@ -30,7 +30,13 @@ where id='REPLACE_WITH_YOUR_AUTH_USER_UUID';
 
 Verify exactly the intended account changed. Subsequent role changes are available in Admin → Users & roles. Merchants apply at `/sell`; approval promotes the application owner to merchant. Drivers need the driver role and a linked driver record.
 
-Guest checkout uses a real anonymous Auth session tied to RLS. Enable anonymous sign-ins if wanted; otherwise customers must sign in. Supabase recommends CAPTCHA for anonymous access. This release does not pass CAPTCHA tokens, so keep anonymous checkout disabled when CAPTCHA is required, or implement that UI first. Configure Auth rate limits and hosting/proxy abuse controls. [Anonymous authentication guidance](https://supabase.com/docs/guides/auth/auth-anonymous).
+Products, categories and bags are public. Checkout requires a registered, non-anonymous Supabase user. Both the page/API and the database RPC enforce this; the internal reservation function cannot be called by clients. Anonymous sign-ins are not used for checkout. Configure Auth rate limits and hosting/proxy abuse controls.
+
+Set Authentication → URL Configuration → Site URL to `https://edgedirect2u.vercel.app`. Allow the exact `/auth/confirm` and `/auth/confirm?next=/reset-password` callback URLs on Vercel and Hostinger; also allow `/auth/confirm?next=/checkout` for registration during checkout. Add the custom domain only after DNS and HTTPS work. See [Supabase redirect URL guidance](https://supabase.com/docs/guides/auth/redirect-urls).
+
+The app exchanges PKCE codes on the issuing origin, recognizes recovery flows even when they land at `/`, and verifies legacy implicit recovery sessions before writing session cookies. Raw callback tokens are removed from the URL and are not returned in application responses or written to localStorage. The local preview forwards legacy localhost recovery landings to the trusted Vercel origin. This compatibility handling does not replace the dashboard URL correction; users on other devices cannot reach this computer's localhost.
+
+For recovery links that work across browsers, configure the Recovery email template to link directly to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`. The app verifies this single-use token server-side and opens the password form. The default PKCE email flow otherwise requires the browser that requested recovery to retain its verifier cookie. See [Supabase email template guidance](https://supabase.com/docs/guides/auth/auth-email-templates). Do not put service credentials in email templates.
 
 ## Storage and permissions
 

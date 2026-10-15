@@ -55,10 +55,12 @@ export async function records(kind: string,publicView=false): Promise<RecordRow[
 }
 function filterRecords(kind:string,rows:RecordRow[]){if(kind!=='banners')return rows;const now=Date.now();return rows.filter(r=>(!r.data.starts_at||Date.parse(String(r.data.starts_at))<=now)&&(!r.data.ends_at||Date.parse(String(r.data.ends_at))>=now));}
 export async function orders(a: Actor): Promise<Order[]> { if (await localMode()) return localStore().scopedOrders(a); const { data, error } = await (await supabase()).rpc('my_orders'); if (error) throw new Error(error.message); return data || []; }
-export async function guestActor(): Promise<Actor> {
-  const a = await actor(false); if (a) return a;
-  // Production guest checkout uses a real anonymous Supabase session, RLS-bound to auth.uid().
-  const db = await supabase(); const { data, error } = await db.auth.signInAnonymously(); if (error || !data.user) throw new Error('Enable anonymous checkout in Supabase Auth or sign in'); return { id: data.user.id, role: 'customer' };
+export async function checkoutActor(): Promise<Actor> {
+  if (await localMode()) return (await actor())!;
+  if (!configured()) throw new Error('Authentication required');
+  const { data: { user }, error } = await (await supabase()).auth.getUser();
+  if (error || !user || user.is_anonymous) throw new Error('Authentication required');
+  return { id: user.id, role: 'customer' };
 }
 export function newId() { return randomUUID(); }
 export async function managementProducts(a:Actor,page=1){

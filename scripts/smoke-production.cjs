@@ -32,7 +32,7 @@ async function main(){
     if(home.headers.has('x-powered-by'))throw new Error('Framework header should be disabled');
     if(!process.env.PAYSTACK_SECRET_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY){
       const checkout=await fetch(origin+'/api/checkout',{method:'POST',headers:{Origin:new URL(process.env.NEXT_PUBLIC_SITE_URL).origin,'Content-Type':'application/json'},body:JSON.stringify({key:require('node:crypto').randomUUID(),items:[{product_id:'unavailable-production-smoke-test',quantity:1,options:{}}],address:{name:'Smoke Test',email:'test@example.com',phone:'08012345678',street:'123 Test Street',city:'Lagos',state:'Lagos'},coupon:''}),signal:AbortSignal.timeout(15000)});
-      if(checkout.status!==503)throw new Error('Unconfigured checkout was not blocked before reservation');
+      if(checkout.status!==401)throw new Error('Unauthenticated checkout was not blocked before reservation');
     }
     const image=await fetch(origin+'/opengraph-image',{signal:AbortSignal.timeout(15000)});
     if(!image.ok || !image.headers.get('content-type')?.includes('image/png'))throw new Error('Social share image did not render');

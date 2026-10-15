@@ -14,6 +14,17 @@ it('defaults validate and drafts do not publish',async()=>{await login(admin);aw
 it('denies unauthorized publication in SQL',async()=>{await login(customer);await expect(db.query('select change_theme($1,$2::jsonb,null)',['publish',JSON.stringify(defaultTheme)])).rejects.toThrow('Forbidden');});
 it('publishes and restores a previous version',async()=>{await login(admin);const v=await db.query<{id:string}>("select version_id id from website_settings where id='published'");await db.query('select change_theme($1,$2::jsonb,null)',['publish',JSON.stringify({...defaultTheme,name:'Published'})]);await db.query('select change_theme($1,null,$2)',['rollback',v.rows[0].id]);const r=await db.query<{config:{name:string}}>("select config from website_settings where id='published'");expect(r.rows[0].config.name).toBe(defaultTheme.name);});
 const checkout=()=>({key:randomUUID(),items:[{product_id:'p-lamp',quantity:1,options:{}}],address:{name:'Test Customer',email:'test@example.com',phone:'08012345678',street:'123 Test Street',city:'Lagos',state:'Lagos'},coupon:''});
+it('blocks anonymous Auth checkout and private reservation bypass without reserving stock',async()=>{
+  await login(customer);
+  const before=await db.query('select reserved from products where id=\'p-lamp\'');
+  await db.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:customer,is_anonymous:true})]);
+  await db.exec('set role authenticated');
+  try{
+    await expect(db.query('select create_checkout($1::jsonb)',[JSON.stringify(checkout())])).rejects.toThrow('Authentication required');
+    await expect(db.query('select create_checkout_reserved($1::jsonb)',[JSON.stringify(checkout())])).rejects.toThrow('permission denied');
+  }finally{await db.exec('reset role');await db.query("select set_config('request.jwt.claims','{}',false)");}
+  expect((await db.query('select reserved from products where id=\'p-lamp\'')).rows).toEqual(before.rows);
+});
 it('creates allocated orders transactionally and retries safely',async()=>{await login(customer);const input=checkout();const one=await db.query<{o:{id:string;allocations:unknown[]}}>('select create_checkout($1::jsonb) o',[JSON.stringify(input)]);const two=await db.query<{o:{id:string}}>('select create_checkout($1::jsonb) o',[JSON.stringify(input)]);expect(two.rows[0].o.id).toBe(one.rows[0].o.id);expect(one.rows[0].o.allocations).toHaveLength(1);});
 it('rejects insufficient stock and cross-merchant stock access',async()=>{await login(customer);const i=checkout();i.items[0].quantity=50;await expect(db.query('select create_checkout($1::jsonb)',[JSON.stringify(i)])).rejects.toThrow('Insufficient stock');await login(merchant);await expect(db.query("select adjust_stock('p-lamp',1,'Receive')")).rejects.toThrow('Forbidden');});
 it('applies payment verification and duplicate webhooks once',async()=>{await login(customer);const r=await db.query<{o:{reference:string;total_kobo:number}}>('select create_checkout($1::jsonb) o',[JSON.stringify(checkout())]);const o=r.rows[0].o;await expect(db.query('select apply_payment($1,$2,$3,$4)',[o.reference,1,'NGN','success'])).rejects.toThrow('mismatch');for(let n=0;n<2;n++)await db.query('select apply_payment($1,$2,$3,$4)',[o.reference,o.total_kobo,'NGN','success']);const count=await db.query<{n:number}>('select count(*)::integer n from payments where reference=$1',[o.reference]);expect(count.rows[0].n).toBe(1);});
