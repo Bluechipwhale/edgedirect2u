@@ -9,6 +9,7 @@ export async function POST(req:Request){try{
   switch(c.action){
     case 'create-company':rpc='platform_create_company';args={p_slug:c.slug,p_name:c.name,p_owner_email:c.owner,p_package:c.package,p_brand:{...defaultTheme,name:c.name.slice(0,60),seoTitle:c.name,logo:'',lightLogo:'',darkLogo:'',mobileLogo:'',favicon:'',copyright:`© ${new Date().getFullYear()} ${c.name}`,tagline:'Your company workspace',description:'',seoDescription:''}};break;
     case 'activation':rpc='platform_set_active';args={p_company:c.company_id,p_active:c.active};break;
+    case 'company-address':rpc='platform_set_company_address';args={p_company:c.company_id,p_address:c.address};break;
     case 'member':rpc='company_set_member';args={p_company:c.company_id,p_email:c.email,p_role:c.role,p_active:c.active};break;
     case 'brand':if(c.operation==='publish')assertPublishable(c.config);rpc='company_brand';args={p_company:c.company_id,p_action:c.operation,p_config:c.config,p_version:c.version||null};break;
     case 'policy':rpc='company_field_policy';args={p_company:c.company_id,p_radius:c.radius,p_target:c.target,p_web:c.web};break;
