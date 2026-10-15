@@ -34,6 +34,10 @@ it('discovers only active authorized workspaces and scopes aggregate reports',as
   await as(agentA,async()=>{expect((await db.query('select slug from my_company_workspaces()')).rows).toEqual([{slug:'company-a'}]);expect((await db.query<{metrics:{planned:number;completed:number}}>('select company_metrics($1) metrics',[companyA])).rows[0].metrics).toMatchObject({planned:1,completed:0});await expect(db.query('select company_metrics($1)',[companyB])).rejects.toThrow('Forbidden');});
   await as(outsider,async()=>expect((await db.query('select * from my_company_workspaces()')).rows).toEqual([]));
 });
+it('does not expose internal entitlement checks to direct client calls',async()=>{
+  await as(outsider,()=>expect(db.query('select field_enabled($1)',[companyA])).rejects.toThrow('permission denied'));
+  await as(adminA,()=>expect(db.query('select field_enabled($1)',[companyA])).rejects.toThrow('permission denied'));
+});
 it('does not expose the flagship private commerce through new company-admin membership',async()=>{
   await as(adminA,async()=>{expect(await scalar('select app_role() id')).toBe('customer');await expect(db.query('select dashboard_metrics()')).rejects.toThrow('Forbidden');});
 });
