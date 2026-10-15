@@ -2,13 +2,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, KeyRound, Mail } from 'lucide-react';
-export function PasswordForm({ reset = false, expired = false, email }: { reset?: boolean; expired?: boolean; email?: string }) {
+export function PasswordForm({ reset = false, expired = false, email, verified = false }: { reset?: boolean; expired?: boolean; email?: string; verified?: boolean }) {
   const [busy, setBusy] = useState(false), [error, setError] = useState(''), [message, setMessage] = useState('');
   return <div className="container narrow-page auth-page">
     <span className="auth-icon">{reset ? <KeyRound /> : <Mail />}</span><span className="eyebrow muted">YOUR ACCOUNT</span>
     <h1>{reset ? 'A fresh start.' : 'Let’s get you back in.'}</h1>
     <p>{reset ? 'Choose a new password with at least 10 characters.' : 'Enter your email and we’ll send you a secure recovery link.'}</p>
     {reset && email && <p className="recovery-identity">Updating the password for <strong>{email}</strong></p>}
+    {reset && verified && <p className="info-message" role="status">Recovery link verified. Choose your new password below.</p>}
     {expired && <p className="info-message">This email link has expired or already been used. Request a new one below.</p>}
     {message ? <div className="form-panel"><p role="status">{message}</p><Link href="/login" className="button">{reset ? 'Sign in to your account' : 'Back to sign in'}<ArrowRight size={17} /></Link></div> :
       <form className="form-panel" onSubmit={async event => {

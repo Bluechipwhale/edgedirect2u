@@ -6,7 +6,7 @@ const config: NextConfig = {
   serverExternalPackages: ['node:sqlite'],
   images: { remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }, { protocol: 'https', hostname: '**.supabase.co' }] },
   async redirects() {
-    return [{ source: '/:path*', has: [{ type: 'host', value: 'www.edgedirect2u.com' }], destination: 'https://edgedirect2u.com/:path*', permanent: true }];
+    return [{ source: '/:path*', has: [{ type: 'host', value: 'www\\.edgedirect2u\\.com' }], destination: 'https://edgedirect2u.com/:path*', permanent: true }];
   },
   turbopack: { root: process.cwd(), rules: { '*.css': { loaders: ['@tailwindcss/turbopack'], as: '*.css' } } },
   webpack(config) {

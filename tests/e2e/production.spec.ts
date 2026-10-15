@@ -17,6 +17,14 @@ test('homepage recovery credentials reach the reset flow and expired fragments l
   await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);expect(consumed).toBe(true);
   await page.goto('/?code=qa-expired-code');await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);
 });
+test('email verification needs an explicit click and clears the token from browser history',async({page})=>{
+  await page.goto('/auth/verify?token_hash=qa-single-use-email-token-hash&type=recovery');
+  await expect(page.getByRole('heading',{name:'Let’s reset your password.'})).toBeVisible();
+  await expect(page).toHaveURL(/\/auth\/verify$/);
+  await expect(page.getByRole('button',{name:'Continue securely',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Continue securely',exact:true}).click();
+  await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);
+});
 test('checkout sign-in preserves the bag and registration destination',async({page})=>{
   await page.goto('/products/sculpture-table-lamp');await page.getByRole('button',{name:'Add to bag',exact:true}).click();
   await page.goto('/login?next=/checkout');await expect(page.getByText('Your bag is saved. Sign in or create an account to continue to checkout.')).toBeVisible();
