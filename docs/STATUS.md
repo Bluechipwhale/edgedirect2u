@@ -1,3 +1,5 @@
+> **15 October 2026:** Foundation release deployed on Vercel, Hostinger and Supabase; PR #1 merged. 66 unit/database tests and 14 browser flows passed. Signed APKs and Windows installer v1.0.2 published. See [PHASE-1-RELEASE.md](PHASE-1-RELEASE.md) for the current report; earlier entries below describe previous releases.
+
 # Implementation status and architecture
 
 ## Live deployment verified 14 October 2026

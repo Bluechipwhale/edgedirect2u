@@ -1,3 +1,5 @@
+> **15 October update:** The official E-Edge brand, company/field workspaces, separate MFA-protected platform-owner grant, and client release 1.0.2 are deployed. See [PHASE-1-RELEASE.md](PHASE-1-RELEASE.md) for verified scope, access and remaining work.
+
 # Start your Edgedirect2u store
 
 The web app is live at https://edgedirect2u.vercel.app and https://maroon-mink-604054.hostingersite.com. Both read the same Supabase database. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger currently uses the verified source ZIP; its GitHub integration is not connected. Custom-domain registration remains separate.
@@ -42,7 +44,7 @@ Ordinary authenticated admin work and raster photo uploads already use Supabase 
 
 ## Install the apps
 
-The [GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.1) contains the store APK, driver APK, Windows x64 installer and SHA-256 checksums. The website's `/apps` page links to them and also offers browser installation. Version 1.0.1 native clients load the live website at `edgedirect2u.vercel.app`; they also trust the future custom origin.
+The [GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2) contains the store APK, driver APK, Windows x64 installer and SHA-256 checksums. The website's `/apps` page links to them and also offers browser installation. Version 1.0.2 native clients load the live website at `edgedirect2u.vercel.app`; they also trust the future custom origin.
 
 The Windows installer is unsigned. Android packages use the project's release signing certificate. Driver users need an authorized driver account and assigned deliveries. Merchant sign-in opens its own workspace. Administrator privileges remain checked on the server in every client.
 

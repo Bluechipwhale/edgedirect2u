@@ -1,5 +1,7 @@
 # Connected marketplace handoff
 
+**15 October 2026:** the company foundation, official branding and installer release 1.0.2 supersede the earlier launch entries below. Read [PHASE-1-RELEASE.md](PHASE-1-RELEASE.md) for current deployment, administrator access, verification and outstanding work.
+
 **14 October 2026:** the app is live at https://edgedirect2u.vercel.app and https://maroon-mink-604054.hostingersite.com. Vercel automatically deploys GitHub `main`; Hostinger uses the verified source ZIP. Both hosts have private Supabase service and live Paystack keys. Live health, protected management and signed no-op webhook checks passed; no payment or refund has been performed. Signed v1.0.1 APKs and the unsigned Windows installer are published; both APKs passed live-page checks. Supabase email-link/SMTP configuration and Paystack dashboard routing remain unverified. The requested custom domain needs registration. See [START-HERE.md](START-HERE.md) for current access. Earlier dated records describe the predeployment state.
 
 The supplied Supabase project is connected. Eight forward migrations are applied, with a checksum ledger in the private `edge_deploy` schema. Six editorial categories are available; no sample products, merchant businesses, orders or customer accounts were inserted. The public API can read published settings and categories, while anonymous private profile reads and dashboard RPC calls are denied.

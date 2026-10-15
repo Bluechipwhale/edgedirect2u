@@ -1,8 +1,10 @@
-# Edgedirect2u
+# E-Edge Direct 2U
 
 A responsive ecommerce marketplace built with Next.js 16, React 19, TypeScript, Supabase PostgreSQL/Auth/Storage and Paystack. The storefront, administration, Theme Studio, inventory reservations, merchant allocations and delivery workflow share one application.
 
 **Owner setup:** [Start here](docs/START-HERE.md) for Hostinger's GitHub connection, administrator sign-in, product uploads and app installation.
+
+**15 October release:** [Foundation release report](docs/PHASE-1-RELEASE.md) covers the deployed company/field workspaces, platform-owner MFA, official branding, verified installers, tests and remaining integrations. New-company commerce and delivery remain gated until their complete tenant migration.
 
 ## Run locally
 
