@@ -42,8 +42,8 @@ Native launchers do not implement GPS execution. Use a policy-approved browser f
 
 ## Verification
 
-- 67 unit/database tests and 14 browser tests passed for the final application tree, including hostile requests across two isolated companies, MFA authorization boundaries, fresh/accuracy-aware geofences, supervisor exceptions, immutable evidence, retention and sign-in destinations.
-- Lint, TypeScript, production dependency audit and Hostinger production build passed in GitHub run `38693634877`. Vercel production and Hostinger deployment completed successfully.
+- 77 unit/database tests and 16 browser tests passed, including hostile requests across two isolated companies, MFA authorization boundaries, geofences, immutable evidence, recovery callback handling, anonymous checkout denial and preservation of the checkout destination and bag.
+- Lint, TypeScript, production dependency audit and Hostinger production build passed in GitHub run `38703965292`. Storefront preview artifacts are retained with that run. Vercel production and Hostinger are the deployment targets.
 - Both live hosts returned successful storefront, database health, official-logo, installer hub and protected workspace pages. Unauthenticated platform mutation and MFA APIs returned 401. Private pages return no-store headers; geolocation is allowed only on the field surface.
 - Live database checks confirmed the company-admin membership, blocked platform access at AAL1, revoked direct writes, aggregate counts, both active database jobs, and no pending migrations.
 - Native build run `38690218111` passed Android unit/lint/signature/emulator tests and the Windows build/renderer check. Local installer downloads match GitHub SHA-256 digests. Published-APK connectivity run `38692937951` passed against the live site; both unobstructed store and driver screenshots were inspected. The preceding run was blocked by an emulator Pixel Launcher ANR; the recovery now handles only that identified launcher interruption and fails on app ANRs.
