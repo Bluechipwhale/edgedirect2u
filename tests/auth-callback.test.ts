@@ -50,6 +50,12 @@ it('verifies recovery only on an explicit same-origin form submission and uses a
   expect(auth.verifyOtp).toHaveBeenCalledWith({token_hash:'qa-single-use-email-token-hash',type:'recovery'});
   expect(response.status).toBe(303);expect(response.headers.get('location')).toBe('https://edgedirect2u.com/reset-password?verified=1');
 });
+it('keeps development form redirects on the configured browser origin too',async()=>{
+  vi.stubEnv('NODE_ENV','development');vi.stubEnv('NEXT_PUBLIC_SITE_URL','http://127.0.0.1:3100');
+  auth.verifyOtp.mockResolvedValue({error:new Error('Expired')});
+  const response=await confirmEmail(new Request('http://localhost:3100/auth/confirm',{method:'POST',headers:{host:'127.0.0.1:3100',origin:'http://127.0.0.1:3100','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token_hash:'qa-single-use-email-token-hash',type:'recovery'})}));
+  expect(response.headers.get('location')).toBe('http://127.0.0.1:3100/forgot-password?expired=1');
+});
 it('rejects cross-origin token submissions before verification and preserves only safe checkout returns',async()=>{
   auth.verifyOtp.mockResolvedValue({error:null});
   const submit=(requestOrigin:string,next:string)=>confirmEmail(new Request(`${origin}/auth/confirm`,{method:'POST',headers:{origin:requestOrigin,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token_hash:'qa-single-use-email-token-hash',type:'signup',next})}));
