@@ -30,6 +30,10 @@ it('isolates company rows, memberships, stores, roles and all direct writes',asy
   await as(adminA,async()=>{const companies=await db.query('select id from platform_companies');expect(companies.rows).toEqual([{id:companyA}]);expect((await db.query('select id from field_stores')).rows).toEqual([{id:storeA}]);expect((await db.query('select user_id from platform_memberships where company_id=$1',[companyB])).rows).toEqual([]);await expect(db.query("insert into platform_memberships(company_id,user_id,role) values($1,$2,'company_admin')",[companyB,adminA])).rejects.toThrow();await expect(db.query("select company_set_member($1,'person5@example.com','company_admin',true)",[companyB])).rejects.toThrow('Forbidden');});
   await as(outsider,async()=>{expect((await db.query('select * from field_visits')).rows).toEqual([]);expect((await db.query('select * from platform_companies')).rows).toEqual([]);});
 });
+it('discovers only active authorized workspaces and scopes aggregate reports',async()=>{
+  await as(agentA,async()=>{expect((await db.query('select slug from my_company_workspaces()')).rows).toEqual([{slug:'company-a'}]);expect((await db.query<{metrics:{planned:number;completed:number}}>('select company_metrics($1) metrics',[companyA])).rows[0].metrics).toMatchObject({planned:1,completed:0});await expect(db.query('select company_metrics($1)',[companyB])).rejects.toThrow('Forbidden');});
+  await as(outsider,async()=>expect((await db.query('select * from my_company_workspaces()')).rows).toEqual([]));
+});
 it('does not expose the flagship private commerce through new company-admin membership',async()=>{
   await as(adminA,async()=>{expect(await scalar('select app_role() id')).toBe('customer');await expect(db.query('select dashboard_metrics()')).rejects.toThrow('Forbidden');});
 });

@@ -18,7 +18,7 @@ export async function proxy(request:NextRequest){
   }
   response.headers.set('Content-Security-Policy',csp);
   if(request.nextUrl.pathname==='/app-sw.js'){response.headers.set('Cache-Control','no-cache, no-store, must-revalidate');response.headers.set('Content-Security-Policy',"default-src 'self'; script-src 'self'; connect-src 'self'");}
-  if(/^\/(admin|account|merchant|driver|company|field|platform|checkout|forgot-password|reset-password|auth|theme-preview|api)(\/|$)/.test(request.nextUrl.pathname))response.headers.set('Cache-Control','private, no-store');
+  if(/^\/(admin|account|merchant|driver|company|field|platform|workspaces|checkout|forgot-password|reset-password|auth|theme-preview|api)(\/|$)/.test(request.nextUrl.pathname))response.headers.set('Cache-Control','private, no-store');
   return response;
 }
 export const config={matcher:['/((?!_next/static|_next/image|favicon.ico|fonts|icon.svg).*)']};

@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     if (result.error) throw new Error(input.action === 'login' ? 'Unable to sign in. Check your email and password, or confirm your email first.' : result.error.message);
     let redirect='/account';
     if(result.data.session&&result.data.user){const {data:profile}=await db.from('profiles').select('role').eq('id',result.data.user.id).single();redirect=profile?.role==='admin'||profile?.role==='operations'?'/admin':profile?.role==='driver'?'/driver':profile?.role==='merchant'?'/merchant':'/account';}
+    if(redirect==='/account'&&result.data.session){const {data:workspaces}=await db.rpc('my_company_workspaces');if(workspaces?.length)redirect='/workspaces';}
     return NextResponse.json({ ok: true, confirmation: !result.data.session, redirect });
   } catch (error) { return failure(error); }
 }

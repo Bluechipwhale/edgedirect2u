@@ -10,7 +10,7 @@ export type FieldStore={id:string;company_id:string;name:string;address:string;l
 export type Assignment={id:string;company_id:string;store_id:string;agent_id:string;visit_date:string};
 export type Visit={id:string;assignment_id:string;agent_id:string;started_at:string;completed_at:string|null;override_reason:string|null;task_report:Record<string,unknown>|null};
 export type Shift={id:string;agent_id:string;started_at:string;ended_at:string|null};
-export type CompanySnapshot={company:Company;role:CompanyRole;actorId:string;members:CompanyMember[];stores:FieldStore[];assignments:Assignment[];visits:Visit[];shifts:Shift[];modules:{module:string;enabled:boolean}[];versions:{id:string;created_at:string}[]};
+export type CompanySnapshot={company:Company;role:CompanyRole;actorId:string;metrics:{stores:number;planned:number;completed:number;agents:number};members:CompanyMember[];stores:FieldStore[];assignments:Assignment[];visits:Visit[];shifts:Shift[];modules:{module:string;enabled:boolean}[];versions:{id:string;created_at:string}[]};
 const company={company_id:z.uuid()};
 export const platformCommand=z.discriminatedUnion('action',[
   z.object({action:z.literal('create-company'),slug:z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/).min(2).max(60),name:z.string().trim().min(2).max(100),owner:z.email(),package:z.enum(['commerce','delivery','field_operations','enterprise'])}),

@@ -12,8 +12,8 @@ export async function companySnapshot(slug:string):Promise<CompanySnapshot>{
     db.from('field_assignments').select('*').eq('company_id',id).gte('visit_date',new Date(Date.now()-7*86400000).toISOString().slice(0,10)).lte('visit_date',new Date(Date.now()+14*86400000).toISOString().slice(0,10)).order('visit_date',{ascending:true}).limit(200),
     db.from('field_visits').select('id,assignment_id,agent_id,started_at,completed_at,override_reason,task_report').eq('company_id',id).order('started_at',{ascending:false}).limit(200),
     db.from('field_shifts').select('id,agent_id,started_at,ended_at').eq('company_id',id).order('started_at',{ascending:false}).limit(100),
-    db.from('platform_modules').select('module,enabled').eq('company_id',id),db.from('platform_brand_versions').select('id,created_at').eq('company_id',id).order('created_at',{ascending:false}).limit(10),
+    db.from('platform_modules').select('module,enabled').eq('company_id',id),db.from('platform_brand_versions').select('id,created_at').eq('company_id',id).order('created_at',{ascending:false}).limit(10),db.rpc('company_metrics',{p_company:id}),
   ]);if(results.some(r=>r.error))throw new Error('Company workspace unavailable');
-  const [members,stores,assignments,visits,shifts,modules,versions]=results.map(r=>r.data||[]);
-  return {company:{...company,brand:themeSchema.safeParse(company.brand).success?company.brand:defaultTheme,brand_draft:themeSchema.safeParse(company.brand_draft).success?company.brand_draft:company.brand},role:role as CompanyRole,actorId:user.id,members,stores,assignments,visits,shifts,modules,versions} as CompanySnapshot;
+  const [members,stores,assignments,visits,shifts,modules,versions,metrics]=results.map(r=>r.data||[]);
+  return {company:{...company,brand:themeSchema.safeParse(company.brand).success?company.brand:defaultTheme,brand_draft:themeSchema.safeParse(company.brand_draft).success?company.brand_draft:company.brand},role:role as CompanyRole,actorId:user.id,metrics,members,stores,assignments,visits,shifts,modules,versions} as CompanySnapshot;
 }
