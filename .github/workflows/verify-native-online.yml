@@ -41,7 +41,7 @@ jobs:
           export ANDROID_AVD_HOME="$ANDROID_USER_HOME/avd"
           mkdir -p "$ANDROID_AVD_HOME"
           echo no | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd --name EdgeOnline --path "$ANDROID_AVD_HOME/EdgeOnline.avd" --package "system-images;android-35;google_apis;x86_64" --force
-          "$ANDROID_HOME/emulator/emulator" -avd EdgeOnline -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader -memory 2048 -dns-server 8.8.8.8,8.8.4.4 > artifacts/online/emulator.log 2>&1 &
+          "$ANDROID_HOME/emulator/emulator" -avd EdgeOnline -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader -memory 3072 -dns-server 8.8.8.8,8.8.4.4 > artifacts/online/emulator.log 2>&1 &
           trap 'adb -s emulator-5554 logcat -d -v brief chromium:W cr_WebView:W AndroidRuntime:E "*:S" > artifacts/online/webview.log; adb -s emulator-5554 emu kill || true' EXIT
           timeout 120s adb -s emulator-5554 wait-for-device
           ready=false
@@ -52,6 +52,9 @@ jobs:
           [ "$ready" = true ] || exit 1
           adb -s emulator-5554 shell svc wifi enable
           adb -s emulator-5554 shell input keyevent 82
+          adb -s emulator-5554 shell settings put global window_animation_scale 0
+          adb -s emulator-5554 shell settings put global transition_animation_scale 0
+          adb -s emulator-5554 shell settings put global animator_duration_scale 0
           adb -s emulator-5554 shell date -u
           passed=true
           for app in Store Driver; do
@@ -65,8 +68,17 @@ jobs:
                 adb -s emulator-5554 shell am start -W -n "$package/com.edgedirect2u.shell.MainActivity"
               fi
               sleep 5
+              adb -s emulator-5554 shell rm -f /sdcard/edge-window.xml
+              rm -f "artifacts/online/$app.xml"
               adb -s emulator-5554 shell uiautomator dump /sdcard/edge-window.xml >/dev/null 2>&1 || true
               adb -s emulator-5554 pull /sdcard/edge-window.xml "artifacts/online/$app.xml" >/dev/null 2>&1 || true
+              recovery=0
+              python3 scripts/android-launcher-recovery.py "artifacts/online/$app.xml" || recovery=$?
+              if [ "$recovery" = 2 ]; then
+                adb -s emulator-5554 exec-out screencap -p > "artifacts/online/$app.png"
+                exit 1
+              fi
+              if [ "$recovery" = 3 ]; then continue; fi
               if grep -Fq "$expected" "artifacts/online/$app.xml" 2>/dev/null; then loaded=true; break; fi
             done
             adb -s emulator-5554 exec-out screencap -p > "artifacts/online/$app.png"
