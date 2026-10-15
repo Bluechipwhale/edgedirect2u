@@ -34,6 +34,7 @@ export async function POST(req: Request) {
       const { data: { user } } = await db.auth.getUser();
       if (!user || user.is_anonymous) throw new Error('Authentication required');
       const { error } = await db.auth.updateUser({ password: input.password });
+      if (error?.code === 'same_password') return NextResponse.json({ ok: true, unchanged: true, message: 'This password is already set for your account. You can sign in with it now, or request another reset to choose a different password.' }, { headers: { 'Cache-Control': 'private, no-store' } });
       if (error) throw new Error(error.message);
       return NextResponse.json({ ok: true });
     }
