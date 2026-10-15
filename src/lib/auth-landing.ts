@@ -14,7 +14,7 @@ export function authLanding(href: string, liveOrigin?: string): Landing | null {
   // explicitly configured, trusted live deployment receives this handoff.
   if (liveOrigin && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
     const live = new URL(liveOrigin);
-    if (live.protocol === 'https:' && live.hostname === 'edgedirect2u.vercel.app') {
+    if (live.protocol === 'https:' && ['edgedirect2u.com', 'edgedirect2u.vercel.app'].includes(live.hostname) && !live.username && !live.password && !live.port) {
       return { kind: 'redirect', href: `${live.origin}/${url.search}${url.hash}` };
     }
   }

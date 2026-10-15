@@ -13,6 +13,7 @@ it('recognizes implicit recovery tokens and rejects incomplete or expired links'
 it('only forwards a legacy localhost link to the explicitly trusted live deployment', () => {
   const url='http://localhost:3000/?code=qa-code';
   expect(authLanding(url,'https://edgedirect2u.vercel.app')).toEqual({kind:'redirect',href:'https://edgedirect2u.vercel.app/?code=qa-code'});
-  for(const target of ['https://untrusted.example','http://edgedirect2u.vercel.app'])expect(authLanding(url,target)).toEqual({kind:'redirect',href:'/auth/confirm?code=qa-code'});
+  expect(authLanding(url,'https://edgedirect2u.com')).toEqual({kind:'redirect',href:'https://edgedirect2u.com/?code=qa-code'});
+  for(const target of ['https://untrusted.example','http://edgedirect2u.vercel.app','https://edgedirect2u.com:8443','https://user@edgedirect2u.com'])expect(authLanding(url,target)).toEqual({kind:'redirect',href:'/auth/confirm?code=qa-code'});
   expect(authLanding('https://shop.example/?code=qa-code','https://edgedirect2u.vercel.app')).toEqual({kind:'redirect',href:'/auth/confirm?code=qa-code'});
 });
