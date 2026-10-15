@@ -2,17 +2,17 @@
 
 ## Deployed
 
-- Vercel: https://edgedirect2u.vercel.app
-- Hostinger: https://maroon-mink-604054.hostingersite.com
+- Primary website on Hostinger: https://edgedirect2u.com
+- Vercel backup: https://edgedirect2u.vercel.app
 - GitHub main: https://github.com/Bluechipwhale/edgedirect2u; pull request #1 merged at `c73d283`.
 - Supabase: migrations 009–014 applied with verified TLS and migration checksums. No development catalogue or test accounts were inserted.
 - Installers: https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2. The signed Android packages retain their original identities and certificate. The Windows installer is unsigned.
 
-Both web hosts use the same live database. Hostinger currently uses the validated source ZIP; Vercel deploys GitHub main automatically. The requested custom domain is not registered or connected by this release.
+Both web hosts use the same live database. Hostinger uses the validated source ZIP; Vercel deploys GitHub main automatically. The owner purchased `edgedirect2u.com`, and the existing Hostinger app is connected to it with working HTTPS. Its temporary Hostinger hostname was retired by the domain change. Keep Vercel deployed as an independent backup.
 
 The storefront now includes an editorial hero and clearer mobile category cards. Products and bags remain public; registered-account sign-in is required for checkout, with the bag and checkout destination retained. Both the web API and the SQL entry point reject anonymous checkout before stock is reserved.
 
-The local preview at http://127.0.0.1:3000 also reads the shared database; authorized admin edits there affect the live data. Automated write tests use isolated fixtures. Heavy release builds run in GitHub because the workstation's C: drive has less than 300 MB free.
+The local preview at http://127.0.0.1:3000 also reads the shared database; authorized admin edits there affect the live data. Automated write tests use isolated fixtures. Heavy release builds run in GitHub to preserve workstation disk space.
 
 ## What is complete
 
@@ -28,11 +28,11 @@ Company members can discover their authorized workspaces at `/workspaces`; sign-
 
 The confirmed account `olasodechukwudi@gmail.com` retains company administration and now has a separate, audited platform-owner grant. Platform permissions require verified MFA; the grant alone cannot open the control plane with a password-only session.
 
-No password was assigned when granting these roles to the existing confirmed account. If its password is unknown, request recovery at https://edgedirect2u.vercel.app/forgot-password and choose a new password privately from the recovery email. The original password cannot be retrieved.
+The owner confirmed that password sign-in is working. No password was assigned when granting these roles to the existing confirmed account. If recovery is needed, use https://edgedirect2u.com/forgot-password and choose a new password privately from the recovery email. The original password cannot be retrieved.
 
 Super Admin → Your companies includes an editable Company address field for each company. The flagship starts with the owner-supplied address: **15 Emmanuel Olorunfemi, off College Road, Ogba, Lagos, Nigeria**. Changes require a verified platform-owner MFA session and are audited. The business address is separate from the workspace URL slug and the login email.
 
-1. Sign in at https://edgedirect2u.vercel.app/login?next=/platform/security using your existing account password.
+1. Sign in at https://edgedirect2u.com/login?next=/platform/security using your existing account password.
 2. Continue securely, scan the private QR with your own authenticator, and enter its current code. Keep the setup QR and codes private.
 3. Platform owner: `/platform`. Flagship company: `/company/e-edge-direct-2u`. Field work: `/field/e-edge-direct-2u`.
 4. Upload actual products at `/admin/products`, then receive stock at `/admin/inventory`. There are no active products yet; production was not populated with sample merchandise.
@@ -52,6 +52,8 @@ Native launchers do not implement GPS execution. Use a policy-approved browser f
 
 This is the foundation and initial operational release, not completion of all seven applications in the master directive. Native GPS and device integrity, offline synchronization, photographs/signatures/OTP for field visits, routing optimization, push notifications and iOS builds are not implemented. Company-scoped catalogue/orders/inventory/payments, domains, billing, entitlement management and the remaining enterprise modules need subsequent phases. Existing flagship commerce remains available with its existing merchant isolation.
 
-The owner must complete password sign-in and authenticator setup personally. Supabase dashboard access is restored: Site URL is `https://edgedirect2u.vercel.app`, and six exact Vercel/Hostinger authentication callback URLs are saved and verified after reload. Custom SMTP is still required for customer email delivery outside the project team and for editing the recovery template. Public registration must not be treated as fully commissioned until that sender is configured and tested. The shared Paystack webhook still points to Nexzek's WooCommerce endpoint; it was not changed. Callback verification exists for E-Edge, but shared background webhook routing and a real charge/refund acceptance test remain outstanding. No real payment or refund was initiated during this release.
+The owner must complete authenticator setup personally. Supabase Site URL is `https://edgedirect2u.com`, with exact primary-domain and Vercel backup authentication callbacks. Hostinger SMTP is enabled for `info@edgedirect2u.com`; the owner entered its password privately. The branded recovery template uses a server-verified, single-use token link to the primary domain. A live recovery request succeeded and Hostinger recorded successful SMTP authentication; this verifies submission, not inbox placement. The mailbox trial expires on **14 November 2026** and needs renewal for continued email service. MX, SPF, three DKIM selectors and DMARC were resolved through public DNS. No paid renewal was purchased.
+
+The shared Paystack webhook still points to Nexzek's WooCommerce endpoint; it was not changed. Callback verification exists for E-Edge, but shared background webhook routing and a real charge/refund acceptance test remain outstanding. No real payment or refund was initiated during this release.
 
 Read [PLATFORM-ARCHITECTURE.md](PLATFORM-ARCHITECTURE.md) for module dependencies and the migration boundary.

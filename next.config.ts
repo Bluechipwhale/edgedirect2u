@@ -5,6 +5,9 @@ const config: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   serverExternalPackages: ['node:sqlite'],
   images: { remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }, { protocol: 'https', hostname: '**.supabase.co' }] },
+  async redirects() {
+    return [{ source: '/:path*', has: [{ type: 'host', value: 'www.edgedirect2u.com' }], destination: 'https://edgedirect2u.com/:path*', permanent: true }];
+  },
   turbopack: { root: process.cwd(), rules: { '*.css': { loaders: ['@tailwindcss/turbopack'], as: '*.css' } } },
   webpack(config) {
     // Run the same CSS loader in-process on hosts that cannot start Turbopack's CSS worker.
