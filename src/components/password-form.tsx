@@ -10,7 +10,7 @@ export function PasswordForm({ reset = false, expired = false, email }: { reset?
     <p>{reset ? 'Choose a new password with at least 10 characters.' : 'Enter your email and we’ll send you a secure recovery link.'}</p>
     {reset && email && <p className="recovery-identity">Updating the password for <strong>{email}</strong></p>}
     {expired && <p className="info-message">This email link has expired or already been used. Request a new one below.</p>}
-    {message ? <div className="form-panel"><p role="status">{message}</p><Link href={reset ? '/account' : '/login'} className="button">{reset ? 'Go to your account' : 'Back to sign in'}<ArrowRight size={17} /></Link></div> :
+    {message ? <div className="form-panel"><p role="status">{message}</p><Link href="/login" className="button">{reset ? 'Sign in to your account' : 'Back to sign in'}<ArrowRight size={17} /></Link></div> :
       <form className="form-panel" onSubmit={async event => {
         event.preventDefault(); setBusy(true); setError('');
         const form = new FormData(event.currentTarget);
@@ -18,7 +18,7 @@ export function PasswordForm({ reset = false, expired = false, email }: { reset?
         try {
           const response = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reset ? { action: 'update-password', password: form.get('password') } : { action: 'recover', email: form.get('email') }) });
           const data = await response.json(); if (!response.ok) throw new Error(data.error);
-          setMessage(reset ? 'Your password has been updated.' : data.message);
+          setMessage(reset ? data.unchanged ? data.message : 'Your password has been updated. You can sign in with it now.' : data.message);
         } catch (e) { setError(e instanceof Error ? e.message : 'Unable to complete this request'); } finally { setBusy(false); }
       }}>
         {reset ? <><label>New password<input name="password" type="password" required minLength={10} maxLength={100} autoComplete="new-password" /></label><label>Confirm new password<input name="confirmation" type="password" required minLength={10} maxLength={100} autoComplete="new-password" /></label></> : <label>Email address<input name="email" type="email" required autoComplete="email" /></label>}

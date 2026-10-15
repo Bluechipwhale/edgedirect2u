@@ -1,7 +1,7 @@
 import { beforeEach, it, expect, vi } from 'vitest';
 const auth = vi.hoisted(() => ({
   resetPasswordForEmail:vi.fn(), getUser:vi.fn(), setSession:vi.fn(),
-  exchangeCodeForSession:vi.fn(), verifyOtp:vi.fn(),
+  exchangeCodeForSession:vi.fn(), verifyOtp:vi.fn(), updateUser:vi.fn(),
 }));
 vi.mock('../src/lib/server', () => ({ configured:()=>true, supabase:async()=>({auth}) }));
 import { POST } from '../src/app/api/auth/route';
@@ -42,4 +42,17 @@ it('does not install invalid or anonymous recovery sessions',async()=>{
     expect((await POST(request({action:'recovery-session',access_token:'qa-access-token-value',refresh_token:'qa-refresh-token-value'}))).status).toBe(400);
   }
   expect(auth.setSession).not.toHaveBeenCalled();
+});
+it('explains when the chosen password is already current without falsely claiming a change',async()=>{
+  auth.getUser.mockResolvedValue({data:{user:{id:'qa-user',is_anonymous:false}}});
+  auth.updateUser.mockResolvedValue({error:{code:'same_password',message:'New password should be different from the old password.'}});
+  const response=await POST(request({action:'update-password',password:'qa-current-password'}));
+  expect(response.status).toBe(200);const data=await response.json();expect(data.unchanged).toBe(true);expect(data.message).toContain('already set');expect(data.message).not.toContain('has been updated');
+});
+it('keeps other password failures visible and requires a verified account',async()=>{
+  auth.getUser.mockResolvedValue({data:{user:{id:'qa-user',is_anonymous:false}}});
+  auth.updateUser.mockResolvedValue({error:{code:'weak_password',message:'Please choose a stronger password'}});
+  expect((await POST(request({action:'update-password',password:'qa-new-password'}))).status).toBe(400);
+  auth.getUser.mockResolvedValue({data:{user:null}});
+  expect((await POST(request({action:'update-password',password:'qa-new-password'}))).status).toBe(401);
 });
