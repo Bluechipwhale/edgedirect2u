@@ -5,6 +5,29 @@ test('password recovery, expired links and reset session guard',async({page})=>{
   await page.goto('/auth/confirm?token_hash=invalid&type=recovery&next=https://untrusted.example');await expect(page).toHaveURL(/forgot-password\?expired=1/);await expect(page.getByText('This email link has expired or already been used. Request a new one below.')).toBeVisible();
   await page.goto('/reset-password');await expect(page.getByRole('heading',{name:'Request a secure link.'})).toBeVisible();
 });
+test('homepage recovery credentials reach the reset flow and expired fragments leave no tokens in the URL',async({page})=>{
+  let consumed=false;
+  await page.route('**/api/auth',async route=>{
+    const body=route.request().postDataJSON();
+    expect(body.action).toBe('recovery-session');
+    expect(new URL(page.url()).hash).toBe('');
+    consumed=true;await route.fulfill({status:400,json:{error:'Recovery link is invalid or expired'}});
+  });
+  await page.goto('/#type=recovery&access_token=qa-access-token-value&refresh_token=qa-refresh-token-value');
+  await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);expect(consumed).toBe(true);
+  await page.goto('/?code=qa-expired-code');await expect(page).toHaveURL(/\/forgot-password\?expired=1$/);
+});
+test('checkout sign-in preserves the bag and registration destination',async({page})=>{
+  await page.goto('/products/sculpture-table-lamp');await page.getByRole('button',{name:'Add to bag',exact:true}).click();
+  await page.goto('/login?next=/checkout');await expect(page.getByText('Your bag is saved. Sign in or create an account to continue to checkout.')).toBeVisible();
+  await page.getByRole('link',{name:'Create an account',exact:true}).click();
+  await expect(page).toHaveURL(/\/register\?next=%2Fcheckout$/);
+  await page.getByRole('link',{name:'Sign in',exact:true}).click();
+  await page.route('**/api/auth',route=>route.fulfill({json:{ok:true,redirect:'/account'}}));
+  await page.getByLabel('Email address').fill('qa@example.com');await page.getByLabel('Password',{exact:true}).fill('qa-password');
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/checkout$/);
+  await expect(page.getByText('1 × Sculpture table lamp')).toBeVisible();
+});
 test('saved addresses autofill checkout and a second tab follows bag changes',async({page,context,request})=>{
   const origin='http://127.0.0.1:3100';const address={name:'Saved QA Customer',phone:'08012345678',street:'123 Saved Address Street',city:'Abeokuta',state:'Ogun'};
   const res=await request.post('/api/manage',{headers:{origin},data:{kind:'addresses',id:'qa-autofill-address',data:address}});expect(res.ok()).toBe(true);

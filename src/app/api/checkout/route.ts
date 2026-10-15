@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
-import { guestActor, localMode, supabase, orders,actor,service } from '@/lib/server';
+import { checkoutActor, localMode, supabase, orders,actor,service } from '@/lib/server';
 import { checkoutSchema } from '@/lib/validation';
 import { localStore } from '@/lib/local-store';
 import { guard, failure } from '@/lib/http';
 import { paystack } from '@/lib/paystack';
 export async function POST(request: Request) {
-  try { guard(request); const input = checkoutSchema.parse(await request.json());
+  try { guard(request); const a = await checkoutActor(); const input = checkoutSchema.parse(await request.json());
     if (!(await localMode()) && (!process.env.PAYSTACK_SECRET_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY)) return NextResponse.json({error:'Checkout is temporarily unavailable. Please try again later.'},{status:503});
-    const a = await guestActor();
     let order; if(await localMode()) order = localStore().checkout(a,input); else { const {data,error} = await (await supabase()).rpc('create_checkout',{p_input:input}); if(error) throw new Error(error.message); order=data; }
     if (await localMode() || !process.env.PAYSTACK_SECRET_KEY) return NextResponse.json({order, configuration:'Order reserved for 30 minutes. Payments require Supabase and Paystack configuration; no charge has been made.'});
     if(order.payment_status === 'paid') return NextResponse.json({order});
