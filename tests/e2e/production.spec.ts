@@ -25,7 +25,7 @@ test('checkout sign-in preserves the bag and registration destination',async({pa
   await page.getByRole('link',{name:'Sign in',exact:true}).click();
   await page.route('**/api/auth',route=>route.fulfill({json:{ok:true,redirect:'/account'}}));
   await page.getByLabel('Email address').fill('qa@example.com');await page.getByLabel('Password',{exact:true}).fill('qa-password');
-  await page.getByRole('button',{name:'Sign in',exact:true}).click();await expect(page).toHaveURL(/\/checkout$/);
+  await page.getByRole('button',{name:/^Sign in/}).click();await expect(page).toHaveURL(/\/checkout$/);
   await expect(page.getByText('1 × Sculpture table lamp')).toBeVisible();
 });
 test('saved addresses autofill checkout and a second tab follows bag changes',async({page,context,request})=>{
