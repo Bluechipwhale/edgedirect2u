@@ -93,3 +93,8 @@ it('denies anonymous access and prevents company suspension from being bypassed'
   await db.exec('set role anon');try{await expect(db.query('select * from platform_companies')).rejects.toThrow('permission denied');await expect(db.query('select field_shift($1,\'in\')',[companyA])).rejects.toThrow('permission denied');}finally{await db.exec('reset role');}
   await as(root,()=>db.query('select platform_set_active($1,false)',[companyB]),'aal2');await as(adminB,async()=>{expect((await db.query('select id from platform_companies')).rows).toHaveLength(0);await expect(db.query("select field_save_store($1,'Denied store','A denied address',9,7,null)",[companyB])).rejects.toThrow('Forbidden');});
 });
+it('keeps today’s work ahead of a full history window',async()=>{
+  await db.query("insert into field_stores(company_id,name,address,latitude,longitude) select $1,'History store '||i,'A verified historical store',6.5,3.4 from generate_series(1,205) i",[companyA]);
+  await db.query("insert into field_assignments(company_id,store_id,agent_id,visit_date) select company_id,id,$2,(now() at time zone 'Africa/Lagos')::date-1 from field_stores where company_id=$1 and name like 'History store %'",[companyA,agentA]);
+  await as(agentA,async()=>{const r=await db.query<{visit_date:string}>('select visit_date::text from field_schedule($1)',[companyA]);expect(r.rows).toHaveLength(200);expect(r.rows[0].visit_date).toBe(new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Lagos',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()));expect((await db.query('select * from field_schedule($1)',[companyB])).rows).toHaveLength(0);});
+});

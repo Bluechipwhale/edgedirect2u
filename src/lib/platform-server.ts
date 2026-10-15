@@ -9,7 +9,7 @@ export async function companySnapshot(slug:string):Promise<CompanySnapshot>{
   const {data:role}=await db.rpc('company_role',{p_company:company.id});if(!role)throw new Error('Company membership required');
   const id=company.id;const results=await Promise.all([
     db.from('platform_memberships').select('*').eq('company_id',id),db.from('field_stores').select('*').eq('company_id',id).order('name').limit(200),
-    db.from('field_assignments').select('*').eq('company_id',id).gte('visit_date',new Date(Date.now()-7*86400000).toISOString().slice(0,10)).lte('visit_date',new Date(Date.now()+14*86400000).toISOString().slice(0,10)).order('visit_date',{ascending:true}).limit(200),
+    db.rpc('field_schedule',{p_company:id}),
     db.from('field_visits').select('id,assignment_id,agent_id,started_at,completed_at,override_reason,task_report').eq('company_id',id).order('started_at',{ascending:false}).limit(200),
     db.from('field_shifts').select('id,agent_id,started_at,ended_at').eq('company_id',id).order('started_at',{ascending:false}).limit(100),
     db.from('platform_modules').select('module,enabled').eq('company_id',id),db.from('platform_brand_versions').select('id,created_at').eq('company_id',id).order('created_at',{ascending:false}).limit(10),db.rpc('company_metrics',{p_company:id}),
