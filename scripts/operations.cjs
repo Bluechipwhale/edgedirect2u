@@ -12,8 +12,24 @@ async function main(){
       try{
         await db.query('create extension if not exists pg_cron with schema pg_catalog');
         await db.query("select cron.schedule('edgedirect2u-expire-reservations','*/5 * * * *','select public.expire_reservations();')");
+        const retention=await db.query("select to_regprocedure('public.field_purge_location()') is not null installed");
+        if(retention.rows[0].installed)await db.query("select cron.schedule('edgedirect2u-location-retention','17 2 * * *','select public.field_purge_location();')");
         await db.query('COMMIT');
         console.log('Reservation expiry scheduled every five minutes inside Supabase. No HTTP secret or hosting worker is required for this job.');
+      }catch(error){await db.query('ROLLBACK');throw error;}
+    }
+    const platformIndex=process.argv.indexOf('--platform-owner-email');
+    if(platformIndex!==-1){
+      const email=process.argv[platformIndex+1];
+      if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error('Supply the explicitly authorized platform-owner email');
+      await db.query('BEGIN');
+      try{
+        const users=await db.query('select id,email_confirmed_at,is_anonymous from auth.users where lower(email)=lower($1) for update',[email]);
+        if(users.rows.length!==1 || !users.rows[0].email_confirmed_at || users.rows[0].is_anonymous)throw new Error('Platform owner must have a confirmed, non-anonymous account. No access changed.');
+        const id=users.rows[0].id;
+        await db.query('insert into public.platform_admins(user_id) values($1) on conflict(user_id) do update set active=true',[id]);
+        await db.query("insert into public.platform_audit(actor,action,detail) values($1,'platform.owner_bootstrap',jsonb_build_object('method','trusted_database_owner','mfa_required',true))",[id]);
+        await db.query('COMMIT');console.log('Separate platform-owner authorization granted. Sign in and verify an authenticator at /platform/security before platform access.');
       }catch(error){await db.query('ROLLBACK');throw error;}
     }
     const emailIndex=process.argv.indexOf('--admin-email');

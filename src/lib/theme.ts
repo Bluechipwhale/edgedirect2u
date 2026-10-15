@@ -28,18 +28,19 @@ export const themeSchema = z.object({
 });
 export type Theme = z.infer<typeof themeSchema>;
 export const defaultTheme: Theme = {
-  name: 'edgedirect2u', tagline: 'Good finds. Great living.', description: 'Your everyday essentials and next favourite finds, all in one place.',
-  email: '', phone: '', copyright: '© 2026 Edgedirect2u. All rights reserved.', logo: '', lightLogo: '', darkLogo: '', mobileLogo: '', favicon: '', instagram: '', facebook: '',
-  primary: '#6C3BFF', secondary: '#15152B', accent: '#C8F169', background: '#F8F8FC', surface: '#FFFFFF', text: '#181824', muted: '#717184', border: '#E8E8F0', success: '#168A54', warning: '#E7A526', error: '#D64545',
+  name: 'E-Edge Direct 2U', tagline: 'Commerce. Delivery. Distribution.', description: 'Your everyday essentials and next favourite finds, all in one place.',
+  email: '', phone: '', copyright: '© 2026 E-Edge Direct 2U. All rights reserved.', logo: '/brand/e-edge-direct-2u-official.png', lightLogo: '/brand/e-edge-direct-2u-official.png', darkLogo: '', mobileLogo: '', favicon: '/icon.svg', instagram: '', facebook: '',
+  primary: '#B93400', secondary: '#111111', accent: '#FF4D00', background: '#FAFAF9', surface: '#FFFFFF', text: '#171717', muted: '#62615F', border: '#E8E4E0', success: '#168A54', warning: '#E7A526', error: '#D64545',
   headingFont: 'Geist', bodyFont: 'Geist', fontSize: 16, scale: 1.15, radius: 14, shadow: 'soft', width: 1360, density: 'comfortable', headerHeight: 88, sticky: true, buttonStyle: 'solid', buttonSize: 'medium', productLayout: 'four',
-  announcement: 'Good finds, delivered to your doorstep. Discover your next favourite.', announcementEnabled: true, announcementLink: '/products', announcementBackground: '#15152B', announcementText: '#FFFFFF',
-  heroEyebrow: 'A LITTLE DISCOVERY. A LOT TO LOVE.', heroTitle: 'Your everyday.\nWith an edge.', heroText: 'From the things you need to the finds you didn’t know you loved. Discover a better way to shop, all in one place.', heroCta: 'Explore the collection', heroLink: '/products', heroSecondary: 'Meet our merchants', heroSecondaryLink: '/merchants', heroImage: '', heroMobileImage: '', heroAlign: 'left', heroHeight: 490, heroOverlay: 0, heroBackground: '#EFEAFD',
-  seoTitle: 'Edgedirect2u — Good finds. Great living.', seoDescription: 'Discover electronics, fashion, home essentials and more at Edgedirect2u.',
+  announcement: 'Good finds, delivered to your doorstep. Discover your next favourite.', announcementEnabled: true, announcementLink: '/products', announcementBackground: '#111111', announcementText: '#FFFFFF',
+  heroEyebrow: 'A LITTLE DISCOVERY. A LOT TO LOVE.', heroTitle: 'Your everyday.\nWith an edge.', heroText: 'From the things you need to the finds you didn’t know you loved. Discover a better way to shop, all in one place.', heroCta: 'Explore the collection', heroLink: '/products', heroSecondary: 'Meet our merchants', heroSecondaryLink: '/merchants', heroImage: '', heroMobileImage: '', heroAlign: 'left', heroHeight: 490, heroOverlay: 0, heroBackground: '#FFF0E9',
+  seoTitle: 'E-Edge Direct 2U — Commerce. Delivery. Distribution.', seoDescription: 'Discover electronics, fashion, home essentials and more at E-Edge Direct 2U.',
   navigation: [{ label: 'New arrivals', href: '/products?sort=newest' }, { label: 'Electronics', href: '/categories/electronics' }, { label: 'Fashion', href: '/categories/fashion' }, { label: 'Home & living', href: '/categories/home' }, { label: 'Beauty', href: '/categories/beauty' }, { label: 'Shop local', href: '/merchants' }],
   footerLinks: [{ label: 'Help centre', href: '/help' }, { label: 'Delivery information', href: '/help/delivery' }, { label: 'Returns & refunds', href: '/help/returns' }, { label: 'Privacy policy', href: '/help/privacy' }, { label: 'Terms of service', href: '/help/terms' }],
   sections: ['categories', 'featured', 'banners', 'new', 'merchants'],
 };
 export const presets: Record<string, Partial<Theme>> = {
+  'E-Edge Direct 2U': { primary: '#B93400', secondary: '#111111', accent: '#FF4D00', background: '#FAFAF9', heroBackground: '#FFF0E9', radius: 14, headingFont: 'Geist' },
   'Electric Modern': { primary: '#6C3BFF', secondary: '#15152B', accent: '#C8F169', background: '#F8F8FC', heroBackground: '#EFEAFD', radius: 14, headingFont: 'Geist' },
   'Luxury Minimal': { primary: '#302B25', secondary: '#181818', accent: '#D5C4A1', background: '#FAF8F3', heroBackground: '#ECE7DC', radius: 2, headingFont: 'Georgia' },
   'Vibrant Gen Z': { primary: '#C62D6E', secondary: '#252044', accent: '#C8F169', background: '#FFF7FA', heroBackground: '#FFE5F0', radius: 24, headingFont: 'Geist' },

@@ -1,4 +1,4 @@
-const VERSION='edge-app-shell-v1';
+const VERSION='edge-app-shell-v2';
 const OFFLINE='/offline.html';
 self.addEventListener('install',event=>{
   event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll([OFFLINE,'/icons/driver-192.png','/icons/driver-512.png'])));
