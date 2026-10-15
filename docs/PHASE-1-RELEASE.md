@@ -5,7 +5,7 @@
 - Vercel: https://edgedirect2u.vercel.app
 - Hostinger: https://maroon-mink-604054.hostingersite.com
 - GitHub main: https://github.com/Bluechipwhale/edgedirect2u; pull request #1 merged at `c73d283`.
-- Supabase: migrations 009–012 applied with verified TLS and migration checksums. No development catalogue or test accounts were inserted.
+- Supabase: migrations 009–013 applied with verified TLS and migration checksums. No development catalogue or test accounts were inserted.
 - Installers: https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2. The signed Android packages retain their original identities and certificate. The Windows installer is unsigned.
 
 Both web hosts use the same live database. Hostinger currently uses the validated source ZIP; Vercel deploys GitHub main automatically. The requested custom domain is not registered or connected by this release.
@@ -25,6 +25,10 @@ Company members can discover their authorized workspaces at `/workspaces`; sign-
 ## Access and daily use
 
 The confirmed account `olasodechukwudi@gmail.com` retains company administration and now has a separate, audited platform-owner grant. Platform permissions require verified MFA; the grant alone cannot open the control plane with a password-only session.
+
+No password was assigned when granting these roles to the existing confirmed account. If its password is unknown, request recovery at https://edgedirect2u.vercel.app/forgot-password and choose a new password privately from the recovery email. The original password cannot be retrieved.
+
+Super Admin → Your companies includes an editable Company address field for each company. The flagship starts with the owner-supplied address: **15 Emmanuel Olorunfemi, off College Road, Ogba, Lagos, Nigeria**. Changes require a verified platform-owner MFA session and are audited. The business address is separate from the workspace URL slug and the login email.
 
 1. Sign in at https://edgedirect2u.vercel.app/login?next=/platform/security using your existing account password.
 2. Continue securely, scan the private QR with your own authenticator, and enter its current code. Keep the setup QR and codes private.
