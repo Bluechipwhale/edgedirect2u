@@ -1,6 +1,6 @@
 Unicode true
 !include "MUI2.nsh"
-Name "Edgedirect2u Store"
+Name "E-Edge Direct 2U Store"
 OutFile "..\..\artifacts\native\Edgedirect2u-Store-Setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\Edgedirect2uStore"
 RequestExecutionLevel user
@@ -26,9 +26,9 @@ Section "Store"
   CreateDirectory "$SMPROGRAMS\Edgedirect2u"
   CreateShortcut "$SMPROGRAMS\Edgedirect2u\Store.lnk" "$INSTDIR\Edgedirect2u.Store.exe"
   CreateShortcut "$DESKTOP\Edgedirect2u Store.lnk" "$INSTDIR\Edgedirect2u.Store.exe"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "DisplayName" "Edgedirect2u Store"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "DisplayName" "E-Edge Direct 2U Store"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "UninstallString" '"$INSTDIR\Uninstall.exe"'
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "DisplayVersion" "1.0.1"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "DisplayVersion" "1.0.2"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Edgedirect2uStore" "Publisher" "Edgedirect2u"
 SectionEnd
 Section "Uninstall"

@@ -1,6 +1,11 @@
 name: Verify published Android connectivity
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Published app release to verify
+        required: true
+        default: v1.0.2
 permissions:
   contents: read
 jobs:
@@ -10,12 +15,17 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - name: Fetch the published signed applications
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
           mkdir -p artifacts/online
           for app in Store Driver; do
-            curl --fail --location --retry 3 "https://github.com/Bluechipwhale/edgedirect2u/releases/download/v1.0.1/Edgedirect2u-$app.apk" -o "artifacts/online/$app.apk"
+            curl --fail --location --retry 3 "https://github.com/Bluechipwhale/edgedirect2u/releases/download/$RELEASE_TAG/Edgedirect2u-$app.apk" -o "artifacts/online/Edgedirect2u-$app.apk"
           done
-          printf '%s  %s\n' 'dce32e5924352a35f8af1572c5571901397904fd1b7ae71e4c2e89b97ac6f048' 'artifacts/online/Store.apk' 'd658cd5a18028ee2b77ec6c20b629d0a68b9558549fcc133d6d3a2cb7f554a2a' 'artifacts/online/Driver.apk' | sha256sum --check -
+          curl --fail --location --retry 3 "https://github.com/Bluechipwhale/edgedirect2u/releases/download/$RELEASE_TAG/SHA256SUMS.txt" -o artifacts/online/SHA256SUMS.txt
+          (cd artifacts/online && sha256sum --check --ignore-missing SHA256SUMS.txt)
+          for app in Store Driver; do mv "artifacts/online/Edgedirect2u-$app.apk" "artifacts/online/$app.apk"; done
           curl --fail --retry 3 https://edgedirect2u.vercel.app/api/health
       - name: Prepare emulator
         run: |
