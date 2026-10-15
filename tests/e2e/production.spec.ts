@@ -23,6 +23,8 @@ test('checkout sign-in preserves the bag and registration destination',async({pa
   await page.getByRole('link',{name:'Create an account',exact:true}).click();
   await expect(page).toHaveURL(/\/register\?next=%2Fcheckout$/);
   await page.getByRole('link',{name:'Sign in',exact:true}).click();
+  await expect(page).toHaveURL(/\/login\?next=%2Fcheckout$/);
+  await expect(page.getByRole('heading',{name:'Good to see you again.'})).toBeVisible();
   await page.route('**/api/auth',route=>route.fulfill({json:{ok:true,redirect:'/account'}}));
   await page.getByLabel('Email address').fill('qa@example.com');await page.getByLabel('Password',{exact:true}).fill('qa-password');
   await page.getByRole('button',{name:/^Sign in/}).click();await expect(page).toHaveURL(/\/checkout$/);
