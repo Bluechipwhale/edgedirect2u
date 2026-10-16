@@ -9,6 +9,7 @@
 .editorial-orbit{position:absolute;inset:-14px -20px 0 20px;border:1px solid color-mix(in srgb,var(--brand-primary) 18%,transparent);border-radius:50%;transform:rotate(-20deg)}
 .editorial-photo{position:absolute;overflow:hidden;border:7px solid var(--surface-color);border-radius:18px;box-shadow:0 18px 44px #11111115}
 .editorial-photo img{object-fit:cover;transition:transform .6s ease}
+.fmcg-art .editorial-photo{background:#fff}.fmcg-art .editorial-photo img{object-fit:contain;padding:28px 20px 62px}.fmcg-art .editorial-side img{padding:20px 14px 46px}
 .editorial-photo:hover img{transform:scale(1.04)}
 .editorial-main{width:65%;height:322px;left:0;top:5px;transform:rotate(-5deg);background:#e5ba38}
 .editorial-side{width:43%;height:224px;right:-7px;top:153px;transform:rotate(7deg);background:#c92127}

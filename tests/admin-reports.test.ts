@@ -2,6 +2,7 @@ import {PGlite} from '@electric-sql/pglite';
 import {beforeAll,afterAll,it,expect} from 'vitest';
 import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
+import {defaultTheme} from '../src/lib/theme';
 
 let db:PGlite;
 const admin='50000000-0000-4000-8000-000000000001';
@@ -22,6 +23,22 @@ beforeAll(async()=>{
  await db.query("insert into payments(reference,amount_kobo,currency,status) values($1,10000,'NGN','success')",[reference]);
 });
 afterAll(async()=>db?.close());
+it('updates starter FMCG copy while preserving private drafts, custom branding and rollback history',async()=>{
+ const old={...defaultTheme,heroTitle:'Your everyday.\nWith an edge.',heroEyebrow:'A LITTLE DISCOVERY. A LOT TO LOVE.',logo:'/brand/owner-logo.png',headerHeight:94};
+ const draft={...defaultTheme,heroTitle:'My private draft',logo:'/brand/draft-logo.png'};
+ await db.query("insert into website_settings(id,config) values('published',$1::jsonb),('draft',$2::jsonb) on conflict(id) do update set config=excluded.config",[JSON.stringify(old),JSON.stringify(draft)]);
+ const sql=readFileSync('supabase/migrations/020_fmcg_storefront.sql','utf8');
+ await db.exec(sql);
+ const settings=(await db.query<{id:string;config:typeof defaultTheme;version_id:string}>('select id,config,version_id from website_settings')).rows;
+ const published=settings.find(r=>r.id==='published')!;
+ expect(published.config).toMatchObject({heroTitle:'Stock up.\nMove forward.',heroEyebrow:'YOUR EVERYDAY SUPPLY PARTNER',logo:old.logo,headerHeight:94});
+ expect(settings.find(r=>r.id==='draft')!.config).toEqual(draft);
+ const history=(await db.query<{config:typeof defaultTheme}>('select config from theme_versions')).rows;
+ expect(history.some(r=>r.config.heroTitle===old.heroTitle&&r.config.logo===old.logo)).toBe(true);
+ expect((await db.query<{config:typeof defaultTheme}>('select config from theme_versions where id=$1',[published.version_id])).rows[0].config).toEqual(published.config);
+ await db.exec(sql);
+ expect((await db.query('select id from theme_versions')).rows).toHaveLength(history.length);
+});
 it('shows verified commerce only to admins, with no anonymous access',async()=>{
  await signedIn(customer);
  await db.exec('set role authenticated');
