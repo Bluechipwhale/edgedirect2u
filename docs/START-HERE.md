@@ -1,51 +1,38 @@
-> **15 October update:** The official E-Edge brand, company/field workspaces, separate MFA-protected platform-owner grant, and client release 1.0.2 are deployed. See [PHASE-1-RELEASE.md](PHASE-1-RELEASE.md) for verified scope, access and remaining work.
+# Use your E-Edge Direct 2U website
 
-# Start your Edgedirect2u store
+The primary website is **https://edgedirect2u.com**, hosted on Hostinger. The backup is https://edgedirect2u.vercel.app. Both use the same Supabase database. GitHub `main` automatically deploys Vercel; Hostinger currently uses the prepared source ZIP. Do not create a second database or re-import the customer file for a website deployment.
 
-The web app is live at https://edgedirect2u.vercel.app and https://maroon-mink-604054.hostingersite.com. Both read the same Supabase database. Sign in at https://edgedirect2u.vercel.app/login to begin uploading. GitHub is connected for automatic Vercel deployments. Hostinger currently uses the verified source ZIP; its GitHub integration is not connected. Custom-domain registration remains separate.
+## Administrator access
 
-## Add a Hostinger deployment
+Sign in at https://edgedirect2u.com/login?next=/admin using **olasodechukwudi@gmail.com** and your own working password. Use the site's Forgot password flow if needed. The password cannot be retrieved from the database.
 
-1. In Hostinger, open **Websites → Create Website → Web App → Import Git Repository**.
-2. Choose `https://github.com/Bluechipwhale/edgedirect2u`, branch `main`, root directory. Connect your GitHub account for automatic updates on future pushes.
-3. Use these settings:
+- `/admin/products`: search the complete catalogue by name, brand, slug or ID; filter published, draft and deleted products; edit any inventory owner's product, photo, price, description, variants or publication status. Delete is reversible and retains order/stock history. Restore appears in the Deleted filter.
+- `/admin/inventory`: receive or remove real stock through an audited adjustment. Reserved stock cannot be removed.
+- `/admin/customers`: search and export the **3,456** contacts imported from the previous `.com.ng` store. Imported contacts are private. Each returning customer chooses their own password and independently confirms their email to claim an eligible record. Old passwords, payment records and historical order totals were not imported into new-site financial reports.
+- `/admin/reports`: filter reporting dates and export new-site sales, payment, refund, store, customer and delivery figures as CSV. Legacy sales remain separate until transaction records are reconciled.
+- `/staff`: role-scoped stock, accounts and van-sales workspaces. PZ client access is limited to its configured product scope.
+- `/admin/theme`: preview and publish website branding changes.
 
-| Setting | Value |
-| --- | --- |
-| Framework | Next.js |
-| Node version | 24 |
-| Install command | `npm ci --include=dev` |
-| Build command | `npm run build:hostinger` |
-| Output directory, if requested | `.next` |
-| Start command, if requested | `node --use-system-ca .next/standalone/server.js` |
-| Entry file, if requested | `.next/standalone/server.js` |
-| Environment variable | `HOSTNAME=0.0.0.0` |
+The researched catalogue contains **250 inactive product drafts**. Review each selling price, photo, variant and pack before publication, then record physical stock. Retailer availability is not your warehouse inventory. Public visitors can browse published products; checkout requires sign-in.
 
-Keep Hostinger's assigned `PORT`. The approved public Supabase connection is already included in the build configuration. No database import is needed. Use Hostinger Business or Cloud hosting with Node.js support.
+The separate platform-owner control plane at `/platform` requires your own verified authenticator session through `/platform/security`. Company settings include the business address. Never share your authenticator QR or codes.
 
-4. Set `NEXT_PUBLIC_SITE_URL` to the exact HTTPS origin Hostinger assigns before building. This is necessary for sign-in and protected submissions. Deploy and check `/api/health`; `status: "ok"` means the server can read Supabase.
-5. Register and attach `edgedirect2u.com` before using it as the canonical origin. The domain was shown as available for purchase during setup; it is not serving this app. Until then, use the live Vercel address above. In Supabase Authentication URL settings, use that live address as the Site URL and allow `/auth/confirm`, following [LAUNCH.md](LAUNCH.md).
+## Customer research workbook
 
-The website is already live on Vercel. A Hostinger deployment reads the same Supabase database; no database copy is needed.
-
-## Add your first product
-
-Open https://edgedirect2u.vercel.app/login. Sign in as **olasodechukwudi@gmail.com** using the password you registered. This confirmed account already has administrator access; successful sign-in opens the admin workspace.
-
-Open `/admin/products`, choose **Add record**, enter the name, select a category and inventory owner, enter the price in **naira**, upload the photo and save. Open `/admin/inventory` to receive actual stock. Products start with zero stock. Use `/admin/theme` to preview and publish branding changes.
-
-You can start uploading before deployment: run `npm run dev` on your computer and open `http://127.0.0.1:3000/login`. Its configured Supabase project is the same project the hosted app uses.
-
-## Enable payments
-
-The Supabase service key and live Paystack key are configured privately on Vercel. A signed connectivity event reached the live handler successfully; no payment or refund was performed. Add the required server settings privately to Hostinger before enabling checkout there. Complete payment/refund acceptance using test mode and a staging database first. This app's current webhook endpoint is `https://edgedirect2u.vercel.app/api/payments/webhook`. The existing WordPress webhook on `nexzektechnology.com` belongs to that separate integration; decide how the Paystack account is shared before replacing it.
-
-Ordinary authenticated admin work and raster photo uploads already use Supabase access policies and do not need the service-role key.
+The editable workbook is `outputs/fmcg-2026-10-15/Nigeria-FMCG-Retail-Prices-2026-10-15.xlsx`. It contains 260 retailer listings across ten categories, 75 brands, exact packs, source URLs, observed availability and verification dates. Its summary formulas, filters and category counts were checked. Observed retail offers can change after the stated research date.
 
 ## Install the apps
 
-The [GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2) contains the store APK, driver APK, Windows x64 installer and SHA-256 checksums. The website's `/apps` page links to them and also offers browser installation. Version 1.0.2 native clients load the live website at `edgedirect2u.vercel.app`; they also trust the future custom origin.
+Open https://edgedirect2u.com/apps or the [v1.0.2 GitHub release](https://github.com/Bluechipwhale/edgedirect2u/releases/tag/v1.0.2) for the store APK, driver APK, Windows x64 installer and checksums. These clients load the live web application and retain server-side permissions. The Windows installer is unsigned. Android packages use the project's release signing certificate.
 
-The Windows installer is unsigned. Android packages use the project's release signing certificate. Driver users need an authorized driver account and assigned deliveries. Merchant sign-in opens its own workspace. Administrator privileges remain checked on the server in every client.
+Driver users need an authorized driver account and assigned jobs. Native GPS execution and offline synchronization are outstanding; the installer alone does not prove a completed real delivery. See [PHASE-1-RELEASE.md](PHASE-1-RELEASE.md) and [APPS.md](APPS.md) for their verified scope.
 
-See [APPS.md](APPS.md) for installation, signing backups and future releases, and [HOSTINGER.md](HOSTINGER.md) for detailed deployment settings.
+## Deployment and remaining commissioning
+
+Recreate `artifacts/hostinger-source.zip` with `powershell -NoProfile -File scripts/package-hostinger.ps1`. In hPanel, open **Websites → edgedirect2u.com → Deployments → Redeploy → Upload new files**, select the newly generated ZIP, and save/redeploy. Using **Use previous files** rebuilds the previous archive. Verify the customer directory and product controls after every release, in addition to `/api/health`.
+
+Hostinger settings are Next.js, Node 24, build command `npm run build:hostinger`, output `.next`, and `HOSTNAME=0.0.0.0`. Keep Hostinger's assigned port and existing private server keys. Read [HOSTINGER.md](HOSTINGER.md) before changing deployment settings.
+
+Hostinger SMTP for `info@edgedirect2u.com` is configured; the owner confirmed recovery email delivery. The shared Paystack webhook still points to the existing Nexzek WooCommerce integration. Shared routing and real payment/refund acceptance remain outstanding. The four additional staff mailboxes remain pending at the owner's request; do not buy a subscription without approval.
+
+Full legacy feature parity is still in progress. The detailed function checklist is [LEGACY-PARITY.md](LEGACY-PARITY.md). Wallet balances, loyalty liabilities and historical sales must be reconciled before they are presented as new-site financial data.
