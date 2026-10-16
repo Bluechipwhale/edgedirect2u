@@ -14,6 +14,12 @@ export async function POST(req:Request){try{
     case 'brand':if(c.operation==='publish')assertPublishable(c.config);rpc='company_brand';args={p_company:c.company_id,p_action:c.operation,p_config:c.config,p_version:c.version||null};break;
     case 'policy':rpc='company_field_policy';args={p_company:c.company_id,p_radius:c.radius,p_target:c.target,p_web:c.web};break;
     case 'store':rpc='field_save_store';args={p_company:c.company_id,p_name:c.name,p_address:c.address,p_lat:c.latitude,p_lng:c.longitude,p_radius:c.radius};break;
+    case 'outlet':rpc='field_save_outlet';args={p_company:c.company_id,p_id:c.id,p_name:c.name,p_address:c.address,p_phone:c.phone,p_route:c.route,p_lat:c.latitude,p_lng:c.longitude};break;
+    case 'route-plan':rpc='field_set_route';args={p_company:c.company_id,p_route:c.route,p_agent:c.agent,p_active:c.active};break;
+    case 'outlet-route':rpc='field_bulk_route';args={p_company:c.company_id,p_stores:c.stores,p_route:c.route,p_agent:c.agent};break;
+    case 'start-store':rpc='field_start_visit';args={p_company:c.company_id,p_store:c.store,p_lat:c.latitude,p_lng:c.longitude,p_accuracy:c.accuracy,p_captured:c.captured};break;
+    case 'location-proposal':rpc='field_propose_location';args={p_company:c.company_id,p_store:c.store,p_lat:c.latitude,p_lng:c.longitude,p_accuracy:c.accuracy,p_captured:c.captured};break;
+    case 'location-review':rpc='field_review_location';args={p_company:c.company_id,p_request:c.request,p_approve:c.approve};break;
     case 'assignment':rpc='field_assign';args={p_company:c.company_id,p_store:c.store,p_agent:c.agent,p_date:c.date};break;
     case 'shift':rpc='field_shift';args={p_company:c.company_id,p_action:c.operation};break;
     case 'checkin':rpc='field_checkin';args={p_company:c.company_id,p_assignment:c.assignment,p_lat:c.latitude,p_lng:c.longitude,p_accuracy:c.accuracy,p_captured:c.captured};break;

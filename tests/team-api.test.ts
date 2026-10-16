@@ -1,0 +1,13 @@
+import {it,expect,vi,beforeEach} from 'vitest';
+const mocks=vi.hoisted(()=>({rpc:vi.fn(),invite:vi.fn(),recover:vi.fn()}));
+vi.mock('../src/lib/platform-server',()=>({platformIdentity:async()=>({db:{rpc:mocks.rpc,auth:{resetPasswordForEmail:mocks.recover}}})}));
+vi.mock('../src/lib/server',()=>({service:()=>({auth:{admin:{inviteUserByEmail:mocks.invite}}})}));
+import {POST,PATCH} from '../src/app/api/company/team/route';
+const origin='https://edgedirect2u.com';const company='10000000-0000-4000-8000-000000000001';
+const body={company_id:company,email:'sales@example.com',name:'Actual Colleague',phone:'',role:'van_sales',principal:null};
+const request=(v:unknown,method='POST',source=origin)=>new Request(`${origin}/api/company/team`,{method,headers:{origin:source,'Content-Type':'application/json'},body:JSON.stringify(v)});
+beforeEach(()=>{vi.resetAllMocks();mocks.rpc.mockResolvedValue({data:{exists:false},error:null});mocks.invite.mockResolvedValue({error:null});mocks.recover.mockResolvedValue({error:null});});
+it('authorizes approval before sending a recipient-controlled invitation',async()=>{const r=await POST(request(body));expect(r.status).toBe(200);expect(mocks.rpc.mock.calls[0][0]).toBe('company_prepare_staff');expect(mocks.invite).toHaveBeenCalledWith('sales@example.com',{redirectTo:`${origin}/reset-password`,data:{name:'Actual Colleague'}});expect(mocks.recover).not.toHaveBeenCalled();});
+it('rejects unauthorized invitations and cross-origin writes without sending an email',async()=>{mocks.rpc.mockResolvedValue({error:{message:'Forbidden'}});expect((await POST(request(body))).status).toBe(403);expect(mocks.invite).not.toHaveBeenCalled();expect((await POST(request(body,'POST','https://other.example'))).status).toBe(400);expect(mocks.invite).not.toHaveBeenCalled();});
+it('records delivery failure without losing approved access',async()=>{mocks.invite.mockRejectedValue(new Error('Provider offline'));const r=await POST(request(body));expect(await r.json()).toMatchObject({ok:true,emailSent:false});expect(mocks.rpc).toHaveBeenLastCalledWith('company_staff_email_result',expect.objectContaining({p_company:company,p_email:'sales@example.com',p_error:expect.any(String)}));});
+it('uses recovery for an existing account and can revoke access without sending mail',async()=>{mocks.rpc.mockResolvedValue({data:{exists:true},error:null});expect((await POST(request(body))).status).toBe(200);expect(mocks.recover).toHaveBeenCalled();expect(mocks.invite).not.toHaveBeenCalled();expect((await PATCH(request({company_id:company,email:body.email,active:false},'PATCH'))).status).toBe(200);expect(mocks.rpc).toHaveBeenLastCalledWith('company_staff_active',{p_company:company,p_email:body.email,p_active:false});});

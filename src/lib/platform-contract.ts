@@ -6,7 +6,7 @@ export const companyRoles=['company_admin','supervisor','field_agent','vendor','
 export type CompanyRole=typeof companyRoles[number];
 export type Company={id:string;slug:string;name:string;address:string;active:boolean;package:string;brand:Theme;brand_draft:Theme;geofence_metres:number;daily_target:number;allow_web_checkin:boolean};
 export type CompanyMember={company_id:string;user_id:string;role:CompanyRole;active:boolean;label:string};
-export type FieldStore={id:string;company_id:string;name:string;address:string;latitude:number;longitude:number;radius_metres:number|null};
+export type FieldStore={id:string;company_id:string;name:string;address:string;latitude:number|null;longitude:number|null;radius_metres:number|null;phone?:string;route?:string;legacy_customer_id?:string|null;location_source?:string};
 export type Assignment={id:string;company_id:string;store_id:string;agent_id:string;visit_date:string};
 export type Visit={id:string;assignment_id:string;agent_id:string;started_at:string;completed_at:string|null;override_reason:string|null;task_report:Record<string,unknown>|null};
 export type Shift={id:string;agent_id:string;started_at:string;ended_at:string|null};
@@ -20,6 +20,12 @@ export const platformCommand=z.discriminatedUnion('action',[
   z.object({action:z.literal('brand'),...company,operation:z.enum(['draft','publish','rollback']),config:themeSchema,version:z.uuid().optional()}),
   z.object({action:z.literal('policy'),...company,radius:z.number().int().min(25).max(1000),target:z.number().int().min(1).max(200),web:z.boolean()}),
   z.object({action:z.literal('store'),...company,name:z.string().trim().min(2).max(100),address:z.string().trim().min(5).max(500),latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),radius:z.number().int().min(25).max(1000).nullable()}),
+  z.object({action:z.literal('outlet'),...company,id:z.uuid().nullable(),name:z.string().trim().min(2).max(100),address:z.string().trim().min(5).max(500),phone:z.string().trim().max(40),route:z.string().trim().max(250),latitude:z.number().min(-90).max(90).nullable(),longitude:z.number().min(-180).max(180).nullable()}),
+  z.object({action:z.literal('route-plan'),...company,route:z.string().trim().min(1).max(250),agent:z.uuid(),active:z.boolean()}),
+  z.object({action:z.literal('outlet-route'),...company,stores:z.array(z.uuid()).min(1).max(100),route:z.string().trim().min(1).max(250),agent:z.uuid().nullable()}),
+  z.object({action:z.literal('start-store'),...company,store:z.uuid(),latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),accuracy:z.number().min(0).max(50),captured:z.iso.datetime()}),
+  z.object({action:z.literal('location-proposal'),...company,store:z.uuid(),latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),accuracy:z.number().min(0).max(50),captured:z.iso.datetime()}),
+  z.object({action:z.literal('location-review'),...company,request:z.uuid(),approve:z.boolean()}),
   z.object({action:z.literal('assignment'),...company,store:z.uuid(),agent:z.uuid(),date:z.iso.date()}),
   z.object({action:z.literal('shift'),...company,operation:z.enum(['in','out'])}),
   z.object({action:z.literal('checkin'),...company,assignment:z.uuid(),latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),accuracy:z.number().min(0).max(50),captured:z.iso.datetime()}),

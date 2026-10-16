@@ -21,6 +21,50 @@ beforeAll(async()=>{
   assignmentA=await as(adminA,()=>scalar("select field_assign($1,$2,$3,(now() at time zone 'Africa/Lagos')::date) id",[companyA,storeA,agentA]));
 });
 afterAll(async()=>db?.close());
+it('paginates the complete customer register and scopes recurring routes to their salesperson',async()=>{
+ await db.query(`insert into field_stores(company_id,name,address,latitude,longitude,route,location_source) select $1,'Route customer '||n,'Verified source address',case when n%2=0 then 6.5 end,case when n%2=0 then 3.4 end,'Recurring test','missing' from generate_series(1,241) n`,[companyA]);
+ await as(adminA,()=>db.query("select field_set_route($1,'Recurring test',$2,true)",[companyA,agentA]));
+ await as(adminA,async()=>{const result=await db.query<{d:{count:number;rows:unknown[]}}>("select field_store_directory($1,'','Recurring test','all',7) d",[companyA]);expect(result.rows[0].d.count).toBe(241);expect(result.rows[0].d.rows).toHaveLength(1);});
+ await as(agentA,async()=>{const r=await db.query<{d:{total:number;count:number}}>("select field_store_directory($1,'','Recurring test','ready',1) d",[companyA]);expect(r.rows[0].d.count).toBe(120);expect(r.rows[0].d.total).toBe(242);await db.query('select field_prepare_day($1)',[companyA]);await db.query('select field_prepare_day($1)',[companyA]);});
+ expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments a join field_stores s on s.id=a.store_id where a.company_id=$1 and s.route=$2',[companyA,'Recurring test'])).rows[0].n)).toBe(241);
+ await as(agentB,()=>expect(db.query('select field_store_directory($1)',[companyA])).rejects.toThrow('Forbidden'));
+ await as(outsider,()=>expect(db.query('select * from field_route_access')).rejects.toThrow('permission denied'));
+ // Avoid affecting the independent schedule/geofence tests below.
+ await db.query("delete from field_assignments where company_id=$1 and store_id in(select id from field_stores where company_id=$1 and route='Recurring test')",[companyA]);
+ await db.query("delete from field_route_access where company_id=$1 and route='Recurring test'",[companyA]);await db.query("delete from field_stores where company_id=$1 and route='Recurring test'",[companyA]);
+});
+it('requires location approval and rolls back automatic clock-in when verification fails',async()=>{
+ const sid=await as(adminB,()=>scalar("select field_save_outlet($1,null,'Missing GPS store','Address pending verification','','Capture route',null,null) id",[companyB]));
+ await as(adminB,()=>db.query("select field_set_route($1,'Capture route',$2,true)",[companyB,agentB]));
+ await as(agentB,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyB,sid])).rejects.toThrow('location needs'));
+ expect((await db.query('select id from field_shifts where company_id=$1',[companyB])).rows).toHaveLength(0);
+ const proposal=await as(agentB,()=>scalar('select field_propose_location($1,$2,6.5,3.4,5,now()) id',[companyB,sid]));
+ expect((await db.query<{latitude:number|null}>('select latitude from field_stores where id=$1',[sid])).rows[0].latitude).toBeNull();
+ await as(adminA,()=>expect(db.query('select field_review_location($1,$2,true)',[companyB,proposal])).rejects.toThrow('Forbidden'));
+ await as(adminB,()=>db.query('select field_review_location($1,$2,true)',[companyB,proposal]));
+ await as(adminB,()=>db.query('select company_field_policy($1,100,30,true)',[companyB]));
+ await as(agentB,()=>expect(db.query('select field_start_visit($1,$2,7,3.4,5,now())',[companyB,sid])).rejects.toThrow('geofence'));
+ expect((await db.query('select id from field_shifts where company_id=$1',[companyB])).rows).toHaveLength(0);
+ await as(agentA,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyB,sid])).rejects.toThrow('Forbidden'));
+ await as(agentB,async()=>{const v=await scalar('select field_start_visit($1,$2,6.5,3.4,5,now()) id',[companyB,sid]);expect(await scalar('select field_start_visit($1,$2,6.5,3.4,5,now()) id',[companyB,sid])).toBe(v);await expect(db.query('select field_checkin_verified($1,$2,6.5,3.4,5,now())',[companyB,assignmentA])).rejects.toThrow('permission denied');});
+ expect((await db.query('select id from field_shifts where company_id=$1',[companyB])).rows).toHaveLength(1);
+ // Restore this fixture for independent company isolation tests.
+ await db.query('delete from field_visits where company_id=$1',[companyB]);await db.query('delete from field_assignments where company_id=$1',[companyB]);await db.query('delete from field_location_requests where company_id=$1',[companyB]);await db.query('delete from field_route_access where company_id=$1',[companyB]);await db.query('delete from field_shifts where company_id=$1',[companyB]);await db.query('delete from field_stores where id=$1',[sid]);
+});
+it('registers staff only through approved confirmed emails, then revokes membership immediately',async()=>{
+ const newcomer='21000000-0000-4000-8000-000000000001';
+ await as(adminA,()=>db.query("select company_prepare_staff($1,'new-sales@example.com','New Salesperson','','van_sales',null)",[companyA]));
+ await db.query("insert into auth.users values($1,'new-sales@example.com',null)",[newcomer]);
+ await as(newcomer,()=>db.query('select company_claim_staff()'));expect((await db.query('select user_id from platform_memberships where user_id=$1',[newcomer])).rows).toHaveLength(0);
+ await db.query('update auth.users set email_confirmed_at=now() where id=$1',[newcomer]);await as(newcomer,()=>db.query('select company_claim_staff()'));
+ expect((await db.query('select role,label,active from platform_memberships where user_id=$1',[newcomer])).rows).toEqual([{role:'field_agent',label:'New Salesperson',active:true}]);
+ await as(adminA,()=>expect(db.query("select company_prepare_staff($1,'person1@example.com','Owner','','van_sales',null)",[companyA])).rejects.toThrow('protected'));
+ await as(adminA,()=>expect(db.query("select company_prepare_staff($1,'new-sales@example.com','New Salesperson','','it_manager',null)",[companyA])).rejects.toThrow('flagship'));
+ await as(adminA,()=>db.query("select company_staff_active($1,'new-sales@example.com',false)",[companyA]));await as(newcomer,async()=>{await db.query('select company_claim_staff()');await expect(db.query('select field_store_directory($1)',[companyA])).rejects.toThrow('Forbidden');});
+ await as(adminA,()=>db.query("select company_staff_active($1,'new-sales@example.com',true)",[companyA]));await as(newcomer,()=>db.query('select company_claim_staff()'));
+ expect((await db.query<{active:boolean}>('select active from platform_memberships where user_id=$1',[newcomer])).rows[0].active).toBe(true);
+ await db.query('delete from company_staff_invitations where email=$1',['new-sales@example.com']);await db.query('delete from platform_memberships where user_id=$1',[newcomer]);
+});
 it('separates platform owners from company administrators and requires MFA',async()=>{
   await as(root,async()=>{expect(await scalar('select platform_is_admin()::text id')).toBe('false');await expect(db.query('select platform_set_active($1,false)',[companyB])).rejects.toThrow('verified MFA');});
   await as(adminA,async()=>{expect(await scalar('select platform_is_admin()::text id')).toBe('false');await expect(db.query('select platform_set_active($1,false)',[companyB])).rejects.toThrow('verified MFA');},'aal2');

@@ -5,3 +5,8 @@
 @import './platform.css';
 @import './atelier.css';
 @import './business.css';
+
+/* Customer field directory */
+.directory-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}.directory-counts{display:flex;flex-wrap:wrap;gap:12px;margin:24px 0}.directory-counts span{padding:12px 18px;border:1px solid #e7e5e4;border-radius:12px;background:#fafaf9}.directory-counts strong{font-size:22px;margin-right:6px}.directory-filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;margin-bottom:24px}.directory-filters label{display:flex;flex-direction:column;gap:8px}.outlet-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.outlet-card{padding:20px;border:1px solid #e7e5e4;border-radius:14px;background:#fff;margin-bottom:12px;overflow-wrap:anywhere}.outlet-card h3{margin:14px 0 8px}.outlet-card p{margin:8px 0}.outlet-card .hero-buttons{margin:16px 0}.directory-pagination{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:24px}.platform-panel h2 svg{vertical-align:middle;margin-right:8px}.platform-panel input,.platform-panel textarea,.platform-panel select{min-width:0;max-width:100%}@media(max-width:760px){.outlet-grid,.directory-filters{grid-template-columns:1fr}.directory-heading{flex-direction:column}.directory-pagination{flex-wrap:wrap}}
+
+.bulk-route-form{padding:18px;background:#fafaf9;border:1px solid #e7e5e4;border-radius:12px;margin:16px 0 24px}

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 
-export function EmailVerificationForm({ tokenHash, type, next }: { tokenHash: string; type: 'email' | 'signup' | 'recovery'; next: string }) {
+export function EmailVerificationForm({ tokenHash, type, next }: { tokenHash: string; type: 'email' | 'signup' | 'recovery' | 'invite'; next: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => { window.history.replaceState(null, '', '/auth/verify'); }, []);
@@ -20,7 +20,7 @@ export function EmailVerificationForm({ tokenHash, type, next }: { tokenHash: st
         const response = await fetch('/auth/confirm', { method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token_hash: tokenHash, type, next }) });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
-        if (data.redirect !== '/reset-password?verified=1' && data.redirect !== '/auth/verified' && data.redirect !== '/auth/verified?next=/checkout') throw new Error('Unable to finish verification. Request a fresh link and try again.');
+        if (!['/reset-password?verified=1','/reset-password?invited=1','/auth/verified','/auth/verified?next=/checkout'].includes(data.redirect)) throw new Error('Unable to finish verification. Request a fresh link and try again.');
         window.location.assign(data.redirect);
       } catch (e) { setError(e instanceof Error ? e.message : 'Unable to verify your link. Please try again.'); setBusy(false); }
     }}>

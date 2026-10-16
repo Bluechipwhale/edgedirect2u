@@ -14,8 +14,8 @@ export async function GET(request: Request) {
     if (code && code.length <= 2000) {
       const db = await supabase();
       const { data, error } = await db.auth.exchangeCodeForSession(code);
-      const recovery = data && 'redirectType' in data && data.redirectType === 'recovery';
-      if (!error) return NextResponse.redirect(new URL(recovery ? '/reset-password?verified=1' : `/auth/verified${next === '/checkout' ? '?next=/checkout' : ''}`, origin));
+      const type = data && 'redirectType' in data ? data.redirectType : '';
+      if (!error) return NextResponse.redirect(new URL(type==='invite'?'/reset-password?invited=1':type==='recovery' ? '/reset-password?verified=1' : `/auth/verified${next === '/checkout' ? '?next=/checkout' : ''}`, origin));
     } else {
       const input = emailVerification.safeParse(Object.fromEntries(url.searchParams));
       // Email scanners may follow GET links. Only an explicit form submission
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const input = emailVerification.parse(Object.fromEntries(new URLSearchParams(body)));
     const { error } = await (await supabase()).auth.verifyOtp({ token_hash: input.token_hash, type: input.type });
     if (error) throw error;
-    const destination = input.type === 'recovery' ? '/reset-password?verified=1' : `/auth/verified${input.next === '/checkout' ? '?next=/checkout' : ''}`;
+    const destination = input.type==='invite'?'/reset-password?invited=1':input.type === 'recovery' ? '/reset-password?verified=1' : `/auth/verified${input.next === '/checkout' ? '?next=/checkout' : ''}`;
     if (json) return NextResponse.json({ ok: true, redirect: destination }, { headers: { 'Cache-Control': 'private, no-store' } });
     return NextResponse.redirect(new URL(destination, origin), 303);
   } catch {

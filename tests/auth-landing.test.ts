@@ -1,5 +1,6 @@
 import { it, expect } from 'vitest';
 import { authLanding } from '../src/lib/auth-landing';
+it('recognizes secure staff invitations without exposing tokens in a redirect',()=>{expect(authLanding('https://shop.example/reset-password#type=invite&access_token=qa-access&refresh_token=qa-refresh')).toEqual({kind:'session',access_token:'qa-access',refresh_token:'qa-refresh',invited:true});expect(authLanding('https://shop.example/?token_hash=qa-hash&type=invite')).toEqual({kind:'redirect',href:'/auth/confirm?token_hash=qa-hash&type=invite'});});
 
 it('routes a root PKCE callback without treating normal browsing as recovery', () => {
   expect(authLanding('https://edgedirect2u.vercel.app/?code=qa-code')).toEqual({kind:'redirect',href:'/auth/confirm?code=qa-code'});

@@ -66,3 +66,13 @@ it('revokes IT administration safely after access changes, including reapproval'
  await as(owner,()=>db.query("select business_set_access('user3@example.com','client','pz',false)"));await expect(report(client)).rejects.toThrow('Forbidden');
 });
 it('escapes CSV formulas and validates idempotency keys',()=>{expect(csv([['=HYPERLINK("bad")',120,' +SUM(1,2)']])).toContain("'=HYPERLINK");expect(businessAction.safeParse({action:'stock',product:'pz-item',quantity:1,reason:'Goods receipt QA'}).success).toBe(false);});
+it('removes IT privileges when staff changes to field supervision and disables client scope immediately',async()=>{
+ const flagship='10000000-0000-4000-8000-000000000001';
+ await as(owner,()=>db.query("select company_prepare_staff($1,'user5@example.com','IT Colleague','','it_manager',null)",[flagship]));await as(itManager,()=>db.query('select company_claim_staff()'));
+ expect((await as(itManager,()=>db.query('select app_role() r'))).rows[0]).toEqual({r:'admin'});
+ await as(owner,()=>db.query("select company_prepare_staff($1,'user5@example.com','Field Supervisor','','supervisor',null)",[flagship]));await as(itManager,()=>db.query('select company_claim_staff()'));
+ expect((await as(itManager,()=>db.query('select app_role() r'))).rows[0]).toEqual({r:'customer'});
+ expect((await as(itManager,()=>db.query('select company_role($1) r',[flagship]))).rows[0]).toEqual({r:'supervisor'});
+ await as(owner,()=>db.query("select company_prepare_staff($1,'user3@example.com','PZ Client','','client','pz')",[flagship]));await as(client,()=>db.query('select company_claim_staff()'));expect(await report(client)).toBeTruthy();
+ await as(owner,()=>db.query("select company_staff_active($1,'user3@example.com',false)",[flagship]));await expect(report(client)).rejects.toThrow('Forbidden');
+});

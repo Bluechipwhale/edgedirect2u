@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       : await db.auth.signInWithPassword({ email: input.email, password: input.password });
     if (result.error) throw new Error(input.action === 'login' ? 'Unable to sign in. Check your email and password, or confirm your email first.' : result.error.message);
     if(result.data.session){
+      const staff=await db.rpc('company_claim_staff');if(staff.error)throw new Error('Signed in, but company access could not be activated. Please try again.');
       const {error:accessError}=await db.rpc('business_claim_access');
       if(accessError)throw new Error('Signed in, but staff access could not be activated. Please try signing in again.');
       // An old customer record is linked only after this account has verified

@@ -1,4 +1,4 @@
-type Landing = { kind: 'redirect'; href: string } | { kind: 'session'; access_token: string; refresh_token: string };
+type Landing = { kind: 'redirect'; href: string } | { kind: 'session'; access_token: string; refresh_token: string; invited?: boolean };
 export function authLanding(href: string, liveOrigin?: string): Landing | null {
   const url = new URL(href);
   if (!['/', '/reset-password'].includes(url.pathname)) return null;
@@ -6,7 +6,7 @@ export function authLanding(href: string, liveOrigin?: string): Landing | null {
   const code = url.searchParams.get('code');
   const tokenHash = url.searchParams.get('token_hash');
   const type = url.searchParams.get('type');
-  const recovery = hash.get('type') === 'recovery';
+  const recovery = ['recovery','invite'].includes(hash.get('type')||'');
   const error = hash.get('error_code') === 'otp_expired' || url.searchParams.get('error_code') === 'otp_expired';
   if (error) return { kind: 'redirect', href: '/forgot-password?expired=1' };
   if (!code && !tokenHash && !recovery) return null;
@@ -19,12 +19,12 @@ export function authLanding(href: string, liveOrigin?: string): Landing | null {
     }
   }
   if (code && code.length <= 2000) return { kind: 'redirect', href: `/auth/confirm?${new URLSearchParams({ code })}` };
-  if (tokenHash && tokenHash.length <= 2000 && ['recovery', 'signup', 'email'].includes(type || '')) {
+  if (tokenHash && tokenHash.length <= 2000 && ['recovery', 'signup', 'email','invite'].includes(type || '')) {
     return { kind: 'redirect', href: `/auth/confirm?${new URLSearchParams({ token_hash: tokenHash, type: type! })}` };
   }
   const access = hash.get('access_token'), refresh = hash.get('refresh_token');
   if (recovery && access && refresh && access.length <= 10000 && refresh.length <= 2000) {
-    return { kind: 'session', access_token: access, refresh_token: refresh };
+    return { kind: 'session', access_token: access, refresh_token: refresh,...(hash.get('type')==='invite'?{invited:true}:{}) };
   }
   return { kind: 'redirect', href: '/forgot-password?expired=1' };
 }

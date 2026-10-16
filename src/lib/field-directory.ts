@@ -1,0 +1,8 @@
+import {z} from 'zod';
+import type {FieldStore} from './platform-contract';
+export const staffRoles=['van_sales','supervisor','company_admin','warehouse_manager','accounts','it_manager','client','delivery_driver'] as const;
+export const staffLabels:Record<string,string>={van_sales:'Van salesperson',supervisor:'Field supervisor',company_admin:'Company administrator',warehouse_manager:'Warehouse manager',accounts:'Accounts',it_manager:'IT manager — full operational administration',client:'Client — supplier reports only',delivery_driver:'Delivery driver'};
+export const staffRegistration=z.object({company_id:z.uuid(),email:z.email().max(254).transform(v=>v.toLowerCase().trim()),name:z.string().trim().min(2).max(160),phone:z.string().trim().max(40).default(''),role:z.enum(staffRoles),principal:z.string().min(1).max(150).nullable().default(null)}).refine(v=>v.role==='client'?!!v.principal:v.principal===null,{message:'Choose a supplier only for client access',path:['principal']});
+export type FieldDirectory={count:number;total:number;located:number;missing:number;routes:{name:string;count:number}[];rows:FieldStore[]};
+export type StaffDirectory={invitations:{email:string;name:string;phone:string;role:string;principal_id:string|null;active:boolean;claimed:boolean;last_email_at:string|null;last_email_error:string|null}[];members:{id:string;name:string;email:string;role:string;active:boolean}[];principals:{id:string;name:string}[]};
+export type FieldRoutePlan={routes:{route:string;agent_id:string;active:boolean}[];locations:{id:string;store_id:string;name:string;latitude:number;longitude:number;accuracy_metres:number;captured_at:string}[]};
