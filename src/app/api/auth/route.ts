@@ -42,7 +42,15 @@ export async function POST(req: Request) {
       ? await db.auth.signUp({ email: input.email, password: input.password, options: { emailRedirectTo: `${origin}/auth/confirm${input.next === '/checkout' ? '?next=/checkout' : ''}` } })
       : await db.auth.signInWithPassword({ email: input.email, password: input.password });
     if (result.error) throw new Error(input.action === 'login' ? 'Unable to sign in. Check your email and password, or confirm your email first.' : result.error.message);
-    if(result.data.session){const {error:accessError}=await db.rpc('business_claim_access');if(accessError)throw new Error('Signed in, but staff access could not be activated. Please try signing in again.');}
+    if(result.data.session){
+      const {error:accessError}=await db.rpc('business_claim_access');
+      if(accessError)throw new Error('Signed in, but staff access could not be activated. Please try signing in again.');
+      // An old customer record is linked only after this account has verified
+      // ownership of the same unique email. No legacy password is used.
+      // Imported history is optional account metadata: an outage here must not
+      // prevent an otherwise valid customer from signing in or checking out.
+      await db.rpc('claim_legacy_customer');
+    }
     let redirect='/account';
     if(result.data.session&&result.data.user){const {data:profile}=await db.from('profiles').select('role').eq('id',result.data.user.id).single();redirect=profile?.role==='admin'||profile?.role==='operations'?'/admin':profile?.role==='driver'?'/driver':profile?.role==='merchant'?'/merchant':'/account';}
     if(result.data.session){const {data:business}=await db.rpc('business_context');if(business&&redirect==='/account')redirect='/staff';}

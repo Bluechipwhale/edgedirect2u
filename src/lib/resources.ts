@@ -1,7 +1,7 @@
 import { z } from 'zod';
 const text=z.string().min(1).max(500);const optional=z.string().max(1000).default('');const url=z.string().max(1000).refine(v=>!v||/^https:\/\//.test(v)||/^\/(?!\/)/.test(v),'Use HTTPS or a relative URL');
 const date=z.union([z.literal(''),z.iso.datetime({offset:true})]).default('');
-export const productSchema=z.object({id:z.string().max(100).optional(),slug:z.string().regex(/^[a-z0-9-]+$/),name:text,category_id:text,brand:text,merchant_id:text,merchant_name:text,price_kobo:z.number().int().positive().max(1_000_000_000),previous_price_kobo:z.number().int().positive().optional(),image:url,images:z.array(url).max(10).default([]),description:text,options:z.record(z.string().max(60),z.array(text).min(1).max(30)).default({}),featured:z.boolean().default(false),active:z.boolean().default(true)});
+export const productSchema=z.object({id:z.string().max(100).optional(),slug:z.string().regex(/^[a-z0-9-]+$/),name:text,category_id:text,brand:text,merchant_id:text,merchant_name:text,price_kobo:z.number().int().positive().max(1_000_000_000),previous_price_kobo:z.number().int().positive().nullish(),image:url,images:z.array(url).max(10).default([]),description:text,options:z.record(z.string().max(60),z.array(text).min(1).max(30)).default({}),featured:z.boolean().default(false),active:z.boolean().default(true)});
 export const resourceSchemas:Record<string,z.ZodType>={
   categories:z.object({name:text,image:url,parent_id:optional}),
   merchants:z.object({name:text,description:optional,email:z.union([z.literal(''),z.email()]).default(''),status:z.enum(['pending','approved','suspended']),commission_bps:z.number().int().min(0).max(10000).default(1000)}),

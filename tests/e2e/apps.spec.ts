@@ -32,3 +32,21 @@ test('administrator creates products with category choices and naira prices',asy
     const response=await(await request.get('/api/catalogue?q='+encodeURIComponent(name))).json();product=response.products.find((p:{name:string})=>p.name===name);expect(product.price_kobo).toBe(123456);expect(product.stock).toBe(0);expect(product.featured).toBe(false);
   }finally{if(product)await request.post('/api/manage',{headers:{origin:'http://127.0.0.1:3100'},data:{kind:'products',id:product.id,data:{...product,active:false}}});}
 });
+test('administrator searches the catalogue and can delete and restore a product',async({page,request})=>{
+  await page.goto('/admin/products');
+  await page.getByRole('textbox',{name:'Search all products'}).fill('Studio wireless headphones');
+  await page.getByRole('button',{name:'Search',exact:true}).click();
+  await expect(page.getByText('1 products',{exact:true})).toBeVisible();
+  const row=page.getByRole('row').filter({hasText:'Studio wireless headphones'});
+  await expect(row).toContainText('Published');
+  await row.getByRole('button',{name:'Delete Studio wireless headphones'}).click();
+  await expect(page.getByRole('dialog',{name:'Delete product'})).toContainText('keeps its past orders and stock history');
+  await page.getByRole('dialog',{name:'Delete product'}).getByRole('button',{name:'Delete product'}).click();
+  await expect(page.getByRole('dialog',{name:'Delete product'})).toHaveCount(0);
+  await expect(row).toContainText('Deleted');
+  const archived=await(await request.get('/api/catalogue?q=Studio%20wireless%20headphones')).json();
+  expect(archived.products).toEqual([]);
+  await row.getByRole('button',{name:'Restore Studio wireless headphones'}).click();
+  await page.getByRole('dialog',{name:'Restore product'}).getByRole('button',{name:'Restore product'}).click();
+  await expect(row).toContainText('Published');
+});

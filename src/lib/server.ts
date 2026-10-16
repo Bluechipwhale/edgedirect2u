@@ -69,6 +69,22 @@ export async function managementProducts(a:Actor,page=1){
   let query=(await supabase()).from('products').select('*',{count:'exact'});if(a.role==='merchant')query=query.eq('merchant_id',a.merchantId!);
   const {data,count,error}=await query.order('created_at',{ascending:false}).range((page-1)*25,page*25-1);if(error)throw new Error(error.message);return {products:(data||[]) as Product[],count:count||0};
 }
+export type ProductSearchState='all'|'active'|'draft'|'archived';
+export async function adminProductCatalogue(a:Actor,page=1,query='',state:ProductSearchState='all',owner=''){
+  if(a.role!=='admin')throw new Error('Forbidden');
+  const q=query.trim().slice(0,120).toLowerCase();
+  if(await localMode()){
+    const all=localStore().list<Product>('products').filter(p=>
+      (!q||`${p.name} ${p.brand} ${p.slug} ${p.id} ${p.merchant_name}`.toLowerCase().includes(q))&&
+      (!owner||p.merchant_id===owner)&&
+      (state==='all'||state==='archived'&&!!p.archived_at||state==='active'&&p.active&&!p.archived_at||state==='draft'&&!p.active&&!p.archived_at));
+    all.sort((left,right)=>right.created_at.localeCompare(left.created_at)||right.id.localeCompare(left.id));
+    return {products:all.slice((page-1)*25,page*25),count:all.length};
+  }
+  const {data,error}=await(await supabase()).rpc('admin_product_catalogue',{p_query:q,p_state:state,p_owner:owner,p_page:page});
+  if(error)throw new Error(error.message);
+  return {products:(data?.products||[]) as Product[],count:Number(data?.count)||0};
+}
 export async function metrics(){
   await requireRole(['admin','operations']);
   if(await localMode()){const store=localStore(),all=store.list<Order>('orders');return {revenue:all.filter(o=>o.payment_status==='paid').reduce((sum,o)=>sum+o.total_kobo,0),orders:all.length,products:store.list<Product>('products').filter(p=>p.active).length,merchants:store.list<RecordRow>('merchants').filter(m=>m.data.status==='approved').length};}

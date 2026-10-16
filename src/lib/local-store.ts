@@ -38,6 +38,27 @@ export class LocalStore {
     this.put(kind, id, row); return row;
   }
   audit(actor: Actor, action: string, detail: unknown) { this.record('audit', { actor: actor.id, action, detail }); }
+  archiveProduct(actor:Actor,id:string,archive:boolean){
+    assertRole(actor.role,['admin']);
+    return this.transaction(()=>{
+      const product=this.get<Product>('products',id);
+      if(!product)throw new Error('Product not found');
+      if(archive&&!product.archived_at){
+        product.archived_previous_active=product.active;
+        product.active=false;
+        product.archived_at=new Date().toISOString();
+        this.put('products',id,product);
+        this.audit(actor,'products.archived',{id,was_active:product.archived_previous_active});
+      }else if(!archive&&product.archived_at){
+        product.active=Boolean(product.archived_previous_active);
+        delete product.archived_at;
+        delete product.archived_previous_active;
+        this.put('products',id,product);
+        this.audit(actor,'products.restored',{id,active:product.active});
+      }
+      return product;
+    });
+  }
   theme(actor: Actor, action: 'draft' | 'publish' | 'rollback', config?: Theme, version?: string) {
     assertRole(actor.role, ['admin']);
     return this.transaction(() => {
