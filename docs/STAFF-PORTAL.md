@@ -25,6 +25,10 @@ If the direct PostgreSQL IPv6 endpoint is unavailable, `node --use-system-ca scr
 
 Before selling, the owner must check the exact pack, manufacturer, selling price and licensed product photo under `/admin/products`. Record physical receipts under `/staff` → Inventory. Product activation is an explicit owner decision. Supplier mappings control client inventory visibility; do not assign another supplier's product to PZ.
 
+The 21 PZ drafts include reference product photos with source provenance in `data/pz-product-images.json`. Images are displayed in product administration and the scoped inventory report. The 80-sheet baby wipes image comes from the manufacturer; the retailer's mismatched 50-sheet photo was rejected. Assorted Morning Fresh uses the retailer's range illustration and still represents a single listed bottle. Product photos are catalogue references, not confirmation of received packaging or image licensing. Check the actual received pack and supplier-approved imagery before publishing.
+
+After deploying the image assets, `node scripts/apply-pz-images.cjs --apply` attaches all 21 photos in one verified-TLS database transaction. It refuses to overwrite edited images, active products or nonzero stock. Re-running the same manifest is safe. Source notes and an audit entry are preserved.
+
 ## Van sales and accounts
 
 1. Administrator approves a confirmed salesperson as **Van sales**.
