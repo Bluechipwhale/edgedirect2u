@@ -4,7 +4,7 @@ import { localMode, records, requireRole, supabase } from '@/lib/server';
 type ImportedCustomer = {
   source_id:string; first_name:string; last_name:string; email:string|null; phone:string;
   address:Record<string,unknown>; route:string; legacy_order_count:number|null; blocked:boolean|null;
-  details:{legacy_verified?:boolean;truncated_name?:boolean;blank_name?:boolean;unusable_legacy_email?:string}; linked_user_id:string|null; imported_at:string;
+  details:{legacy_verified?:boolean;truncated_name?:boolean;blank_name?:boolean;unusable_legacy_email?:string;saved_location_available?:boolean}; linked_user_id:string|null; imported_at:string;
 };
 type ImportedPage = {count:number;rows:ImportedCustomer[];linked_count:number;missing_email_count:number;legacy_unverified_count:number;truncated_name_count:number};
 
@@ -25,7 +25,7 @@ export default async function CustomersPage({searchParams}:{searchParams:Promise
   return <>
     <div className="management-heading"><div><span className="eyebrow muted">CUSTOMER RELATIONSHIPS</span><h1>Customers</h1><p>Customers imported from your former store and accounts registered on this website.</p></div><Link className="small-button" href="/admin/customers/export">Download customer CSV</Link></div>
     <div className="stat-grid"><article><div>Imported customer records</div><strong>{Number(imported.count).toLocaleString()}</strong><small>From edgedirect2u.com.ng</small></article><article><div>Linked accounts</div><strong>{Number(imported.linked_count).toLocaleString()}</strong><small>Confirmed email matches only</small></article><article><div>Unverified on former store</div><strong>{Number(imported.legacy_unverified_count).toLocaleString()}</strong><small>Old status kept for reference</small></article><article><div>Shortened old names</div><strong>{Number(imported.truncated_name_count).toLocaleString()}</strong><small>Review before using in messages</small></article></div>
-    <p className="info-message" style={{marginBottom:22}}>Imported contacts are private. An existing customer can create an account with their own password and confirm their email to link their record. Previous passwords and order payments are not copied.</p>
+    <p className="info-message" style={{marginBottom:22}}>Customer outlets can receive field visits without creating a customer login. <Link href="/field/e-edge-direct-2u">Open customer locations & routes →</Link><br/>Customers who want to order online can register with their own password and confirm their email to link their record. Imported contacts stay private.</p>
     <form method="get" action="/admin/customers" className="table-toolbar"><div className="input-icon"><input type="search" name="q" aria-label="Search imported customers" defaultValue={query} placeholder="Search name, email, phone or old ID"/></div><button className="small-button">Search</button>{query&&<Link className="small-button" href="/admin/customers">Clear</Link>}<span>{Number(imported.count).toLocaleString()} matching records</span></form>
     <div className="table-wrap"><table><thead><tr><th>Legacy ID</th><th>Customer</th><th>Contact</th><th>Route</th><th>Old orders</th><th>Account</th></tr></thead><tbody>{imported.rows.map(row=><tr key={row.source_id}>
       <td><code>{row.source_id}</code></td>

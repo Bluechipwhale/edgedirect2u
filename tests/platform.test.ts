@@ -55,7 +55,7 @@ it('registers staff only through approved confirmed emails, then revokes members
  const newcomer='21000000-0000-4000-8000-000000000001';
  await as(adminA,()=>db.query("select company_prepare_staff($1,'new-sales@example.com','New Salesperson','','van_sales',null)",[companyA]));
  await db.query("insert into auth.users values($1,'new-sales@example.com',null)",[newcomer]);
- await as(newcomer,()=>db.query('select company_claim_staff()'));expect((await db.query('select user_id from platform_memberships where user_id=$1',[newcomer])).rows).toHaveLength(0);
+ await as(newcomer,()=>db.query('select company_claim_staff()'));expect((await db.query('select user_id from platform_memberships where user_id=$1 and company_id=$2',[newcomer,companyA])).rows).toHaveLength(0);
  await db.query('update auth.users set email_confirmed_at=now() where id=$1',[newcomer]);await as(newcomer,()=>db.query('select company_claim_staff()'));
  expect((await db.query('select role,label,active from platform_memberships where user_id=$1',[newcomer])).rows).toEqual([{role:'field_agent',label:'New Salesperson',active:true}]);
  await as(adminA,()=>expect(db.query("select company_prepare_staff($1,'person1@example.com','Owner','','van_sales',null)",[companyA])).rejects.toThrow('protected'));
