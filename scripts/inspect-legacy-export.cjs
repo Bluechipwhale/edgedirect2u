@@ -1,0 +1,18 @@
+// Offline, data-only MySQL dump reader. Never executes statements from the export.
+const fs=require('node:fs'),zlib=require('node:zlib'),{createHash}=require('node:crypto');
+function parseDump(sql,allow){
+ const schema=new Map([...sql.matchAll(/CREATE TABLE `([^`]+)`\s*\(([\s\S]*?)\) ENGINE/g)].map(m=>[m[1],[...m[2].matchAll(/^\s*`([^`]+)`/gm)].map(f=>f[1])]));const result={};
+ const insert=/INSERT INTO `([^`]+)`\s*(?:\(([^;]*?)\)\s*)?VALUES\s*/g;let match;
+ while((match=insert.exec(sql))){const table=match[1],fields=match[2]?[...match[2].matchAll(/`([^`]+)`/g)].map(x=>x[1]):schema.get(table);if(!fields)throw Error('Unknown INSERT schema');let i=insert.lastIndex;const wanted=allow.has(table);const rows=result[table]||(wanted?(result[table]=[]):null);
+ while(i<sql.length){while(/\s/.test(sql[i]))i++;if(sql[i]!=='(')break;i++;const values=[];
+ for(;;){while(/\s/.test(sql[i]))i++;let value;if(sql[i]==="'"){i++;let start=i,parts=[];for(;;){if(i>=sql.length)throw Error('Unclosed SQL string');if(sql[i]==='\\'){parts.push(sql.slice(start,i));const code=sql[++i];parts.push(({0:'\0',b:'\b',n:'\n',r:'\r',t:'\t',Z:'\x1a'})[code]??code);i++;start=i;}else if(sql[i]==="'"){parts.push(sql.slice(start,i));i++;if(sql[i]==="'"){parts.push("'");i++;start=i;continue;}break;}else i++;}value=wanted?parts.join(''):null;}else{const start=i;while(i<sql.length&&sql[i]!==','&&sql[i]!==')')i++;const raw=sql.slice(start,i).trim();if(!/^(NULL|-?\d+(?:\.\d+)?(?:e[+-]?\d+)?)$/i.test(raw))throw Error('Unsupported SQL literal in '+table);value=/^null$/i.test(raw)?null:raw;}
+ values.push(value);while(/\s/.test(sql[i]))i++;if(sql[i]===','){i++;continue;}if(sql[i]!==')')throw Error('Malformed SQL tuple');i++;break;}
+ if(values.length!==fields.length)throw Error('SQL column count mismatch in '+table);if(wanted)rows.push(Object.fromEntries(fields.map((f,n)=>[f,values[n]])));while(/\s/.test(sql[i]))i++;if(sql[i]===','){i++;continue;}if(sql[i]!==';')throw Error('Malformed INSERT terminator');i++;break;}
+ insert.lastIndex=i;
+ }return {schema:Object.fromEntries(schema),tables:result};
+}
+function main(){const bytes=fs.readFileSync('.data/legacy-server.sql.gz');const sql=zlib.gunzipSync(bytes).toString('utf8');const allowed=new Set(['users','shipping_addresses','billing_addresses','orders','order_details','order_transactions','transactions','refund_requests','refund_transactions','wallet_transactions','loyalty_point_transactions','customer_wallets','customer_wallet_histories','sellers','seller_wallets','seller_wallet_histories','delivery_men','deliveryman_wallets','delivery_man_transactions','withdraw_requests','categories','brands','attributes','products','product_stocks','inventory','inventory_details','business_settings','social_medias','store_images','subscriptions','support_tickets','support_ticket_convs','contacts','chattings','drivers_route','st_route','st_state','st_local_govt','pickups','feedback_report','feedback_return','emergency_contacts','flash_deals','flash_deal_products','feature_deals','deal_of_the_days','admin_roles']);
+ const parsed=parseDump(sql,allowed);for(const t of ['users','sellers','delivery_men'])for(const row of parsed.tables[t]||[])for(const k of Object.keys(row))if(/password|token|card_|social_id|remember/i.test(k))delete row[k];
+ fs.writeFileSync('.data/legacy-server-parsed.json',JSON.stringify({source_sha256:createHash('sha256').update(bytes).digest('hex'),...parsed}));console.log(JSON.stringify({source_sha256:createHash('sha256').update(bytes).digest('hex'),counts:Object.fromEntries(Object.entries(parsed.tables).map(([name,rows])=>[name,rows.length]))}));
+}
+if(require.main===module)main();module.exports={parseDump};
