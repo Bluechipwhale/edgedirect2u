@@ -57,12 +57,12 @@ it('registers staff only through approved confirmed emails, then revokes members
  await db.query("insert into auth.users values($1,'new-sales@example.com',null)",[newcomer]);
  await as(newcomer,()=>db.query('select company_claim_staff()'));expect((await db.query('select user_id from platform_memberships where user_id=$1 and company_id=$2',[newcomer,companyA])).rows).toHaveLength(0);
  await db.query('update auth.users set email_confirmed_at=now() where id=$1',[newcomer]);await as(newcomer,()=>db.query('select company_claim_staff()'));
- expect((await db.query('select role,label,active from platform_memberships where user_id=$1',[newcomer])).rows).toEqual([{role:'field_agent',label:'New Salesperson',active:true}]);
+ expect((await db.query('select role,label,active from platform_memberships where user_id=$1 and company_id=$2',[newcomer,companyA])).rows).toEqual([{role:'field_agent',label:'New Salesperson',active:true}]);
  await as(adminA,()=>expect(db.query("select company_prepare_staff($1,'person1@example.com','Owner','','van_sales',null)",[companyA])).rejects.toThrow('protected'));
  await as(adminA,()=>expect(db.query("select company_prepare_staff($1,'new-sales@example.com','New Salesperson','','it_manager',null)",[companyA])).rejects.toThrow('flagship'));
  await as(adminA,()=>db.query("select company_staff_active($1,'new-sales@example.com',false)",[companyA]));await as(newcomer,async()=>{await db.query('select company_claim_staff()');await expect(db.query('select field_store_directory($1)',[companyA])).rejects.toThrow('Forbidden');});
  await as(adminA,()=>db.query("select company_staff_active($1,'new-sales@example.com',true)",[companyA]));await as(newcomer,()=>db.query('select company_claim_staff()'));
- expect((await db.query<{active:boolean}>('select active from platform_memberships where user_id=$1',[newcomer])).rows[0].active).toBe(true);
+ expect((await db.query<{active:boolean}>('select active from platform_memberships where user_id=$1 and company_id=$2',[newcomer,companyA])).rows[0].active).toBe(true);
  await db.query('delete from company_staff_invitations where email=$1',['new-sales@example.com']);await db.query('delete from platform_memberships where user_id=$1',[newcomer]);
 });
 it('separates platform owners from company administrators and requires MFA',async()=>{
