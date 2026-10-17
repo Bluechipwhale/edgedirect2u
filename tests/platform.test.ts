@@ -31,9 +31,12 @@ it('paginates the complete customer register and scopes recurring routes to thei
  await db.query("update field_stores set route='Moved test' where id=$1",[moved]);
  expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments where store_id=$1',[moved])).rows[0].n)).toBe(0);
  await db.query("update field_stores set route='Recurring test' where id=$1",[moved]);await as(agentA,()=>db.query('select field_prepare_day($1)',[companyA]));
+ await as(adminA,()=>db.query("select field_assign($1,$2,$3,(now() at time zone 'Africa/Lagos')::date)",[companyA,moved,agentA]));
  await as(adminA,()=>db.query("select field_set_route($1,'Recurring test',$2,false)",[companyA,agentA]));
  expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments where company_id=$1 and source_route is not null',[companyA])).rows[0].n)).toBe(0);
- await as(agentA,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyA,moved])).rejects.toThrow('Forbidden'));
+ const revoked=await scalar("select id from field_stores where company_id=$1 and route='Recurring test' and id<>$2 limit 1",[companyA,moved]);
+ await as(agentA,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyA,revoked])).rejects.toThrow('Forbidden'));
+ expect((await db.query('select id from field_assignments where store_id=$1',[moved])).rows).toHaveLength(1);
  expect((await db.query('select id from field_assignments where id=$1',[assignmentA])).rows).toHaveLength(1);
  await as(agentB,()=>expect(db.query('select field_store_directory($1)',[companyA])).rejects.toThrow('Forbidden'));
  await as(outsider,()=>expect(db.query('select * from field_route_access')).rejects.toThrow('permission denied'));

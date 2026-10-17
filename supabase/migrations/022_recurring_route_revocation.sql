@@ -1,6 +1,14 @@
 -- Distinguish manager-scheduled visits from recurring route materialization.
 alter table public.field_assignments add column source_route text;
 create index field_assignment_source_route on public.field_assignments(company_id,agent_id,source_route,visit_date) where source_route is not null;
+create or replace function public.field_assign(p_company uuid,p_store uuid,p_agent uuid,p_date date) returns uuid language plpgsql security definer set search_path=public as $$ declare aid uuid;begin
+ if coalesce(company_role(p_company),'') not in ('company_admin','supervisor') or not field_enabled(p_company) then raise exception 'Forbidden';end if;
+ if not exists(select 1 from platform_memberships where company_id=p_company and user_id=p_agent and role='field_agent' and active) then raise exception 'Select an active company field agent';end if;
+ if not exists(select 1 from field_stores where company_id=p_company and id=p_store and active) then raise exception 'Store unavailable';end if;
+ insert into field_assignments(company_id,store_id,agent_id,visit_date) values(p_company,p_store,p_agent,p_date)
+ on conflict(company_id,store_id,agent_id,visit_date) do update set source_route=null returning id into aid;
+ perform platform_log(p_company,'field.assigned',jsonb_build_object('assignment',aid,'agent',p_agent));return aid;
+end $$;
 
 create or replace function public.field_store_access(p_company uuid,p_store uuid) returns boolean
 language sql stable security definer set search_path=public as $$
