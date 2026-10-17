@@ -27,6 +27,14 @@ it('paginates the complete customer register and scopes recurring routes to thei
  await as(adminA,async()=>{const result=await db.query<{d:{count:number;rows:unknown[]}}>("select field_store_directory($1,'','Recurring test','all',7) d",[companyA]);expect(result.rows[0].d.count).toBe(241);expect(result.rows[0].d.rows).toHaveLength(1);});
  await as(agentA,async()=>{const r=await db.query<{d:{total:number;count:number}}>("select field_store_directory($1,'','Recurring test','ready',1) d",[companyA]);expect(r.rows[0].d.count).toBe(120);expect(r.rows[0].d.total).toBe(242);await db.query('select field_prepare_day($1)',[companyA]);await db.query('select field_prepare_day($1)',[companyA]);});
  expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments a join field_stores s on s.id=a.store_id where a.company_id=$1 and s.route=$2',[companyA,'Recurring test'])).rows[0].n)).toBe(241);
+ const moved=await scalar("select id from field_stores where company_id=$1 and route='Recurring test' limit 1",[companyA]);
+ await db.query("update field_stores set route='Moved test' where id=$1",[moved]);
+ expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments where store_id=$1',[moved])).rows[0].n)).toBe(0);
+ await db.query("update field_stores set route='Recurring test' where id=$1",[moved]);await as(agentA,()=>db.query('select field_prepare_day($1)',[companyA]));
+ await as(adminA,()=>db.query("select field_set_route($1,'Recurring test',$2,false)",[companyA,agentA]));
+ expect(Number((await db.query<{n:number}>('select count(*) n from field_assignments where company_id=$1 and source_route is not null',[companyA])).rows[0].n)).toBe(0);
+ await as(agentA,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyA,moved])).rejects.toThrow('Forbidden'));
+ expect((await db.query('select id from field_assignments where id=$1',[assignmentA])).rows).toHaveLength(1);
  await as(agentB,()=>expect(db.query('select field_store_directory($1)',[companyA])).rejects.toThrow('Forbidden'));
  await as(outsider,()=>expect(db.query('select * from field_route_access')).rejects.toThrow('permission denied'));
  // Avoid affecting the independent schedule/geofence tests below.
