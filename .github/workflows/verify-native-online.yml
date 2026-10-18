@@ -5,7 +5,7 @@ on:
       tag:
         description: Published app release to verify
         required: true
-        default: v1.0.2
+        default: v1.0.3
 permissions:
   contents: read
 jobs:
@@ -26,6 +26,7 @@ jobs:
           curl --fail --location --retry 3 "https://github.com/Bluechipwhale/edgedirect2u/releases/download/$RELEASE_TAG/SHA256SUMS.txt" -o artifacts/online/SHA256SUMS.txt
           (cd artifacts/online && sha256sum --check --ignore-missing SHA256SUMS.txt)
           for app in Store Driver; do mv "artifacts/online/Edgedirect2u-$app.apk" "artifacts/online/$app.apk"; done
+          curl --fail --retry 3 https://edgedirect2u.com/api/health
           curl --fail --retry 3 https://edgedirect2u.vercel.app/api/health
       - name: Prepare emulator
         run: |
@@ -59,7 +60,9 @@ jobs:
           passed=true
           for app in Store Driver; do
             package="com.edgedirect2u.$(echo "$app" | tr '[:upper:]' '[:lower:]')"
-            if [ "$app" = Store ]; then expected='Your everyday.'; else expected='Your delivery day'; fi
+            # The hero heading is editable business content. Check the stable,
+            # accessible shopping search control instead of a former headline.
+            if [ "$app" = Store ]; then expected='Search products'; else expected='Your delivery day'; fi
             adb -s emulator-5554 install -r "artifacts/online/$app.apk"
             loaded=false
             for attempt in $(seq 1 24); do
