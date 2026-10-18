@@ -1,4 +1,14 @@
 import { test,expect } from '@playwright/test';
+test('password visibility toggles preserve the entered value without submitting the form',async({page})=>{
+ for(const path of ['/login','/register']){
+  await page.goto(path);const password=page.getByLabel('Password',{exact:true});
+  await password.fill('Example-only-Password7');await expect(password).toHaveAttribute('type','password');
+  await page.getByRole('button',{name:'Show password',exact:true}).click();
+  await expect(password).toHaveAttribute('type','text');await expect(password).toHaveValue('Example-only-Password7');
+  await page.getByRole('button',{name:'Hide password',exact:true}).click();await expect(password).toHaveAttribute('type','password');
+  await expect(page).toHaveURL(new RegExp(path+'$'));
+ }
+});
 test('password recovery, expired links and reset session guard',async({page})=>{
   await page.goto('/login');await page.getByRole('link',{name:'Forgot password?'}).click();await expect(page.getByRole('heading',{name:'Let’s get you back in.'})).toBeVisible();
   await page.getByLabel('Email address').fill('qa@example.com');await page.getByRole('button',{name:'Send recovery link'}).click();await expect(page.getByRole('alert').filter({hasText:'Connect Supabase'})).toContainText('Connect Supabase');

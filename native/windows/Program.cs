@@ -9,7 +9,7 @@ internal static class Program {
     }
 }
 internal sealed class StoreWindow : Form {
-    private const string Home="https://edgedirect2u.vercel.app";
+    private const string Home="https://edgedirect2u.com";
     private static readonly string OfflineUri="data:text/html;charset=utf-8;base64,"+Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(OfflinePage));
     private readonly WebView2 browser=new(){Dock=DockStyle.Fill};
     private readonly Label location=new(){Text="E-EDGE DIRECT 2U · YOUR EVERYDAY, WITH AN EDGE",AutoSize=true,ForeColor=Color.FromArgb(91,91,112),Margin=new Padding(18,14,0,0)};

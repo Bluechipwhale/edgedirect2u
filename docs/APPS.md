@@ -1,3 +1,5 @@
+> **18 October 2026:** Version 1.0.3 prepares primary-domain launchers, driver-only foreground location permission handling and role-aware driver entry. See [APP-RELEASE.md](APP-RELEASE.md) for release scope and commissioning requirements. The version 1.0.1 details below describe the earlier release.
+
 # Web, Android and Windows apps
 
 The web app remains the source of truth. The production deployment is live at https://edgedirect2u.vercel.app with automatic deployments from the original GitHub repository. A second deployment is live at https://maroon-mink-604054.hostingersite.com using source ZIP uploads. Supabase stores shared accounts, products and delivery data. Version 1.0.1 native clients open the verified Vercel origin; the custom edgedirect2u.com origin also remains trusted. Updating the Vercel website updates their shopping and operations screens without another APK/EXE release. Both published APKs have rendered their live pages in the connectivity workflow.

@@ -1,6 +1,10 @@
 package com.edgedirect2u.shell;
 import androidx.activity.ComponentActivity;
 import androidx.activity.OnBackPressedCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -13,6 +17,7 @@ import android.view.WindowInsets;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
+import android.webkit.GeolocationPermissions;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
@@ -30,6 +35,11 @@ public final class MainActivity extends ComponentActivity {
     private LinearLayout errorPanel;
     private String lastInternalUrl=NavigationPolicy.HOME+BuildConfig.START_PATH;
     private ValueCallback<Uri[]> photoCallback;
+    private GeolocationPermissions.Callback locationCallback;
+    private String locationOrigin;
+    private final ActivityResultLauncher<String[]> locationPermissions=registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),result->finishLocation(hasLocationPermission()));
+    private boolean hasLocationPermission(){return checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;}
+    private void finishLocation(boolean allowed){GeolocationPermissions.Callback callback=locationCallback;String origin=locationOrigin;locationCallback=null;locationOrigin=null;if(callback!=null)callback.invoke(origin,allowed&&NavigationPolicy.location(origin,browser.getUrl(),"driver".equals(BuildConfig.FLAVOR)),false);}
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(Color.rgb(250,250,249));
@@ -43,14 +53,22 @@ public final class MainActivity extends ComponentActivity {
         setContentView(root);
         WebSettings settings=browser.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setCacheMode(WebSettings.LOAD_NO_CACHE);settings.setSupportMultipleWindows(false);settings.setUserAgentString(settings.getUserAgentString()+" Edgedirect2uNative/"+BuildConfig.FLAVOR);
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG);
+        settings.setGeolocationEnabled("driver".equals(BuildConfig.FLAVOR));
         CookieManager.getInstance().setAcceptCookie(true);CookieManager.getInstance().setAcceptThirdPartyCookies(browser,false);
         browser.setWebChromeClient(new WebChromeClient(){
+            @Override public void onGeolocationPermissionsShowPrompt(String origin,GeolocationPermissions.Callback callback){
+                finishLocation(false);
+                if(!NavigationPolicy.location(origin,browser.getUrl(),"driver".equals(BuildConfig.FLAVOR))){callback.invoke(origin,false,false);return;}
+                locationOrigin=origin;locationCallback=callback;
+                if(hasLocationPermission())finishLocation(true);else locationPermissions.launch(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION});
+            }
+            @Override public void onGeolocationPermissionsHidePrompt(){finishLocation(false);}
             @Override public void onProgressChanged(WebView view,int value){progress.setProgress(value);progress.setVisibility(value==100?View.GONE:View.VISIBLE);}
             @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){if(!NavigationPolicy.internal(view.getUrl()))return false;if(photoCallback!=null)photoCallback.onReceiveValue(null);photoCallback=callback;Intent picker=new Intent(Intent.ACTION_OPEN_DOCUMENT);picker.addCategory(Intent.CATEGORY_OPENABLE);picker.setType("image/*");picker.putExtra(Intent.EXTRA_MIME_TYPES,new String[]{"image/png","image/jpeg","image/webp"});try{startActivityForResult(picker,100);}catch(android.content.ActivityNotFoundException error){photoCallback.onReceiveValue(null);photoCallback=null;}return true;}
         });
         browser.setWebViewClient(new WebViewClient(){
             @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest request){String url=request.getUrl().toString();if(NavigationPolicy.internal(url))return false;if(request.isForMainFrame()&&NavigationPolicy.external(url,request.hasGesture()))openExternal(url);return true;}
-            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){if(NavigationPolicy.internal(url)){lastInternalUrl=url;showBrowser();}}
+            @Override public void onPageStarted(WebView view,String url,android.graphics.Bitmap icon){finishLocation(false);if(NavigationPolicy.internal(url)){lastInternalUrl=url;showBrowser();}}
             @Override public void onReceivedError(WebView view,WebResourceRequest request,WebResourceError error){if(request.isForMainFrame())showError();}
             @Override public void onReceivedHttpError(WebView view,WebResourceRequest request,WebResourceResponse response){if(request.isForMainFrame()&&response.getStatusCode()>=500)showError();}
             @Override public void onReceivedSslError(WebView view,SslErrorHandler handler,SslError error){handler.cancel();showError();}
@@ -67,5 +85,5 @@ public final class MainActivity extends ComponentActivity {
     @Override protected void onSaveInstanceState(Bundle state){browser.saveState(state);super.onSaveInstanceState(state);}
     @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==100&&photoCallback!=null){Uri photo=data==null?null:data.getData();photoCallback.onReceiveValue(result==RESULT_OK&&photo!=null&&"content".equals(photo.getScheme())?new Uri[]{photo}:null);photoCallback=null;}}
     @Override protected void onStop(){CookieManager.getInstance().flush();super.onStop();}
-    @Override protected void onDestroy(){if(photoCallback!=null)photoCallback.onReceiveValue(null);browser.destroy();super.onDestroy();}
+    @Override protected void onDestroy(){finishLocation(false);if(photoCallback!=null)photoCallback.onReceiveValue(null);browser.destroy();super.onDestroy();}
 }
