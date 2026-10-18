@@ -159,7 +159,7 @@ it('rejects cross-company store assignments and unassigned store discovery',asyn
   await as(agentA,async()=>expect((await db.query('select id from field_stores')).rows).toEqual([{id:storeA}]));
 });
 const checkin=(capture=new Date(),accuracy=5,lat=6.5,lng=3.4)=>db.query<{id:string}>('select field_checkin($1,$2,$3,$4,$5,$6) id',[companyA,assignmentA,lat,lng,accuracy,capture.toISOString()]);
-it('atomically verifies flagship clock-in at 50m, rejects bypasses and excludes test attendance from metrics',async()=>{
+it('atomically verifies flagship clock-in at 100m, rejects bypasses and excludes test attendance from metrics',async()=>{
  const flagship='10000000-0000-4000-8000-000000000001';
  await db.query("insert into platform_memberships(company_id,user_id,role) values($1,$2,'field_agent'),($1,$3,'company_admin') on conflict(company_id,user_id) do update set role=excluded.role,active=true",[flagship,agentA,adminA]);
  await db.query('update platform_companies set allow_web_checkin=true where id=$1',[flagship]);
@@ -167,14 +167,14 @@ it('atomically verifies flagship clock-in at 50m, rejects bypasses and excludes 
  const aid=await scalar("insert into field_assignments(company_id,store_id,agent_id,visit_date) values($1,$2,$3,(now() at time zone 'Africa/Lagos')::date) returning id",[flagship,sid,agentA]);
  const start=(lat:number,accuracy:number)=>as(agentA,()=>scalar('select field_start_visit($1,$2,$3,3.4,$4,now()) id',[flagship,sid,lat,accuracy]));
  try{
-  await as(adminA,()=>expect(db.query('select company_field_policy($1,100,30,true)',[flagship])).rejects.toThrow('maximum'));
+  await as(adminA,()=>expect(db.query('select company_field_policy($1,101,30,true)',[flagship])).rejects.toThrow('maximum'));
   await as(adminA,()=>expect(db.query("select field_override($1,$2,'Remote test attendance should be blocked')",[flagship,aid])).rejects.toThrow('GPS verification'));
   await as(agentA,()=>expect(db.query("select field_shift($1,'in')",[flagship])).rejects.toThrow('use GPS'));
-  await expect(start(6.5006,1)).rejects.toThrow('50 metre geofence');
-  await expect(start(6.5004,10)).rejects.toThrow('uncertainty');
+  await expect(start(6.501,1)).rejects.toThrow('100 metre geofence');
+  await expect(start(6.50085,10)).rejects.toThrow('uncertainty');
   expect((await db.query('select id from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA])).rows).toHaveLength(0);
-  const visit=await start(6.5003,5);expect(await start(6.5003,5)).toBe(visit);
-  await expect(start(6.5006,1)).rejects.toThrow('geofence');
+  const visit=await start(6.5007,5);expect(await start(6.5007,5)).toBe(visit);
+  await expect(start(6.501,1)).rejects.toThrow('geofence');
   expect((await db.query('select test_only,ended_at from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA])).rows).toEqual([{test_only:true,ended_at:null}]);
   await as(agentA,async()=>{
    const report=(await db.query<{d:{count:number;summary:{visited:number}}}>('select field_daily_report($1,(now() at time zone \'Africa/Lagos\')::date,(now() at time zone \'Africa/Lagos\')::date) d',[flagship])).rows[0].d;

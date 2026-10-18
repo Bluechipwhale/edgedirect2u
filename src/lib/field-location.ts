@@ -4,7 +4,7 @@ export function metresBetween(a:{latitude:number;longitude:number},b:{latitude:n
  const h=Math.sin(lat/2)**2+Math.cos(radians(a.latitude))*Math.cos(radians(b.latitude))*Math.sin(lng/2)**2;
  return 6371000*2*Math.atan2(Math.sqrt(h),Math.sqrt(Math.max(0,1-h)));
 }
-export function storeRadius(company:{id:string;geofence_metres:number},store:{radius_metres:number|null}){const radius=store.radius_metres??company.geofence_metres;return company.id==='10000000-0000-4000-8000-000000000001'?Math.min(50,radius):radius;}
+export function storeRadius(company:{id:string;geofence_metres:number},store:{radius_metres:number|null}){return company.id==='10000000-0000-4000-8000-000000000001'?Math.min(100,company.geofence_metres):store.radius_metres??company.geofence_metres;}
 type Geo=Pick<Geolocation,'watchPosition'|'clearWatch'>;
 export function readFieldLocation(geo:Geo,options:{signal?:AbortSignal;target?:{latitude:number;longitude:number;radius:number};onProgress?:(accuracy:number)=>void;timeoutMs?:number}={}):Promise<FieldLocation>{
  return new Promise((resolve,reject)=>{
@@ -19,6 +19,6 @@ export function readFieldLocation(geo:Geo,options:{signal?:AbortSignal;target?:{
    if(!best||c.accuracy<best.coords.accuracy)best=p;options.onProgress?.(c.accuracy);
    const inside=options.target&&metresBetween(c,options.target)+c.accuracy<=options.target.radius;
    if(c.accuracy<=50&&(c.accuracy<=15||inside))finish(undefined,p);
-  },error=>{if(error.code===1)finish(new Error('Location permission was denied. In Android Settings → Apps → Edgedirect2u Driver → Permissions → Location, allow location while using the app and enable precise location.'));else if(!best)finish(new Error('GPS is unavailable. Enable location services and retry outdoors at the store.'));},{enableHighAccuracy:true,maximumAge:0,timeout:options.timeoutMs??30000});if(settled)geo.clearWatch(id);}catch{finish(new Error('Location could not start. Open the secure driver app and allow precise location.'));}
+  },error=>{if(error.code===1)finish(new Error('Location permission was denied. Allow location for this website in your browser, then enable precise location in your phone settings. Open Location help below for the steps.'));else if(!best)finish(new Error('GPS is unavailable. Turn on phone location, move outdoors at the outlet, and retry.'));},{enableHighAccuracy:true,maximumAge:0,timeout:options.timeoutMs??30000});if(settled)geo.clearWatch(id);}catch{finish(new Error('Location could not start. Open the secure field page in your phone browser and allow precise location.'));}
  });
 }

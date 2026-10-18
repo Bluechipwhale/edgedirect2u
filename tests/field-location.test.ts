@@ -17,8 +17,9 @@ it('cancels the location watch when the user leaves the screen',async()=>{
 it('explains denied location permission without supplying any fallback coordinate',async()=>{
  const f=fixture(),result=readFieldLocation(f.geo);f.fail(1);await expect(result).rejects.toThrow('Location permission was denied');expect(f.geo.clearWatch).toHaveBeenCalledWith(7);
 });
-it('keeps a 50m ceiling even if a legacy outlet has a larger radius',()=>{
- expect(storeRadius({id:'10000000-0000-4000-8000-000000000001',geofence_metres:100},{radius_metres:1000})).toBe(50);
+it('uses the approved 100m company boundary despite smaller or larger legacy overrides',()=>{
+ expect(storeRadius({id:'10000000-0000-4000-8000-000000000001',geofence_metres:100},{radius_metres:1000})).toBe(100);
+ expect(storeRadius({id:'10000000-0000-4000-8000-000000000001',geofence_metres:100},{radius_metres:50})).toBe(100);
  expect(storeRadius({id:'other-company',geofence_metres:100},{radius_metres:150})).toBe(150);
  const distance=metresBetween({latitude:6.5,longitude:3.4},{latitude:6.501,longitude:3.4});expect(distance).toBeGreaterThan(110);expect(distance).toBeLessThan(112);
 });
