@@ -1,0 +1,11 @@
+import {it,expect,vi,beforeEach} from 'vitest';
+const mock=vi.hoisted(()=>({rpc:vi.fn()}));
+vi.mock('../src/lib/platform-server',()=>({platformIdentity:async()=>({db:{rpc:mock.rpc}})}));
+import {GET} from '../src/app/api/field/reports/route';
+const company='10000000-0000-4000-8000-000000000001';
+const request=(format='csv')=>new Request(`https://edgedirect2u.com/api/field/reports?company=${company}&from=2026-10-18&to=2026-10-18&format=${format}`);
+const row=(id:string)=>({assignment_id:id,visit_date:'2026-10-18',salesperson:'Agent',legacy_customer_id:'0001',outlet:'=HYPERLINK("bad")',address:'Lagos',phone:'08012345678',route:'Route A',status:'assigned',started_at:null,completed_at:null,override_reason:null,notes:null});
+const report=(rows:unknown[],count=2)=>({from:'2026-10-18',to:'2026-10-18',timezone:'Africa/Lagos',summary:{assigned:count,visited:0,completed:0,remaining:count,in_progress:0},sales:{amount_kobo:0,units:0},rows,count});
+beforeEach(()=>vi.resetAllMocks());
+it('exports all authorized pages and protects spreadsheet cells from formula execution',async()=>{mock.rpc.mockResolvedValueOnce({data:report([row('a')])}).mockResolvedValueOnce({data:report([row('b')])});const r=await GET(request());expect(r.status).toBe(200);expect(r.headers.get('cache-control')).toBe('private, no-store');const text=await r.text();expect(text.match(/Route A/g)).toHaveLength(2);expect(text).toContain("'=HYPERLINK");expect(mock.rpc.mock.calls[1][1]).toMatchObject({p_page:2,p_agent:null,p_company:company});});
+it('refuses partial or changing exports and respects database authorization failures',async()=>{mock.rpc.mockResolvedValueOnce({data:report([row('a')])}).mockResolvedValueOnce({data:report([])});expect((await GET(request())).status).toBeGreaterThanOrEqual(400);mock.rpc.mockResolvedValue({error:{message:'Forbidden'}});expect((await GET(request())).status).toBe(403);});

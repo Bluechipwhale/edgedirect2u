@@ -21,6 +21,28 @@ beforeAll(async()=>{
   assignmentA=await as(adminA,()=>scalar("select field_assign($1,$2,$3,(now() at time zone 'Africa/Lagos')::date) id",[companyA,storeA,agentA]));
 });
 afterAll(async()=>db?.close());
+it('reports every daily assignment with exact pagination, visit states and company/agent isolation',async()=>{
+ await db.query('begin');try{
+  const day='2026-10-18';
+  await db.query(`insert into field_stores(company_id,name,address,route) select $1,'Report outlet '||n,'Report address','Report test' from generate_series(1,205) n`,[companyA]);
+  await db.query(`insert into field_assignments(company_id,store_id,agent_id,visit_date) select company_id,id,$2,$3 from field_stores where company_id=$1 and route='Report test'`,[companyA,agentA,day]);
+  await db.query(`insert into field_visits(company_id,assignment_id,agent_id,completed_at) select company_id,id,agent_id,now() from field_assignments where company_id=$1 and visit_date=$2 and store_id in(select id from field_stores where route='Report test') order by id limit 3`,[companyA,day]);
+  await db.query(`insert into field_visits(company_id,assignment_id,agent_id) select a.company_id,a.id,a.agent_id from field_assignments a where a.company_id=$1 and a.visit_date=$2 and not exists(select 1 from field_visits v where v.assignment_id=a.id) order by a.id limit 1`,[companyA,day]);
+  const report=async(who:string,c=companyA,agent:string|null=agentA,page=1)=>as(who,async()=>{const result=await db.query<{d:{count:number;summary:{assigned:number;visited:number;completed:number;remaining:number;in_progress:number};rows:{assignment_id:string;agent_id:string}[]}}>('select field_daily_report($1,$2,$2,$3,$4) d',[c,day,agent,page]);return result.rows[0].d;});
+  const first=await report(agentA),second=await report(agentA,companyA,null,2),third=await report(adminA,companyA,agentA,3);
+  expect(first.count).toBeGreaterThanOrEqual(205);expect(first.summary.assigned).toBe(first.count);expect(first.summary.visited).toBe(4);expect(first.summary.completed).toBe(3);expect(first.summary.in_progress).toBe(1);expect(first.summary.remaining).toBe(first.count-4);
+  expect(first.rows).toHaveLength(100);expect(second.rows).toHaveLength(100);expect(third.rows).toHaveLength(first.count-200);expect(new Set([...first.rows,...second.rows,...third.rows].map(r=>r.assignment_id)).size).toBe(first.count);expect(first.rows.every(r=>r.agent_id===agentA)).toBe(true);
+  const flagship='10000000-0000-4000-8000-000000000001';
+  await db.query("insert into platform_memberships(company_id,user_id,role) values($1,$2,'field_agent') on conflict(company_id,user_id) do update set role='field_agent',active=true",[flagship,agentA]);
+  await db.query("insert into categories(id,name,image) values('report-category','Test','')");
+  await db.query("insert into products(id,slug,name,category_id,brand,merchant_id,merchant_name,price_kobo,image,description) values('report-product','report-product','Test product','report-category','Test','edge','Test',100,'','Test')");
+  await db.query("insert into business_van_sales(id,seller_id,product_id,quantity,unit_price_kobo,note,created_at,cash_confirmed_at) values(gen_random_uuid(),$1,'report-product',2,100,'Test','2026-10-17T23:30:00Z',now()),(gen_random_uuid(),$1,'report-product',9,100,'Test','2026-10-18T23:30:00Z',null)",[agentA]);
+  await as(agentA,async()=>{const result=await db.query<{d:{sales:{amount_kobo:number;units:number;cash_confirmed_kobo:number}}}>("select field_daily_report($1,'2026-10-18','2026-10-18') d",[flagship]);expect(result.rows[0].d.sales).toMatchObject({amount_kobo:200,units:2,cash_confirmed_kobo:200});});
+ }finally{await db.query('rollback');}
+ for(const [who,scope,agent] of [[agentA,companyA,agentB],[agentB,companyA,null],[adminB,companyA,null],[outsider,companyA,null]])await as(who!,()=>expect(db.query("select field_daily_report($1,'2026-10-18','2026-10-18',$2)",[scope,agent])).rejects.toThrow('Forbidden'));
+ await as(agentA,()=>expect(db.query('select * from legacy_catalogue_source')).rejects.toThrow('permission denied'));
+ await db.exec('set role anon');try{await expect(db.query("select field_daily_report($1,'2026-10-18','2026-10-18')",[companyA])).rejects.toThrow('permission denied');}finally{await db.exec('reset role');}
+});
 it('paginates the complete customer register and scopes recurring routes to their salesperson',async()=>{
  await db.query(`insert into field_stores(company_id,name,address,latitude,longitude,route,location_source) select $1,'Route customer '||n,'Verified source address',case when n%2=0 then 6.5 end,case when n%2=0 then 3.4 end,'Recurring test','missing' from generate_series(1,241) n`,[companyA]);
  await as(adminA,()=>db.query("select field_set_route($1,'Recurring test',$2,true)",[companyA,agentA]));
