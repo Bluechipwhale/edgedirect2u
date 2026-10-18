@@ -1,4 +1,12 @@
 import { test,expect } from '@playwright/test';
+test('driver sign-in preserves the driver entry destination',async({page})=>{
+ await page.goto('/driver');await page.getByRole('link',{name:'Driver sign in',exact:true}).click();
+ await expect(page).toHaveURL(/\/login\?/);expect(new URL(page.url()).searchParams.get('next')).toBe('/driver');
+ await page.route('**/api/auth',route=>route.fulfill({json:{ok:true,redirect:'/staff'}}));
+ await page.getByLabel('Email address',{exact:true}).fill('driver@example.com');
+ await page.getByLabel('Password',{exact:true}).fill('Example-driver-password');
+ await page.getByRole('button',{name:'Sign in',exact:false}).click();await expect(page).toHaveURL(/\/driver$/);
+});
 test('password visibility toggles preserve the entered value without submitting the form',async({page})=>{
  for(const path of ['/login','/register']){
   await page.goto(path);const password=page.getByLabel('Password',{exact:true});
