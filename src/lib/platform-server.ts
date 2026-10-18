@@ -11,7 +11,7 @@ export async function companySnapshot(slug:string):Promise<CompanySnapshot>{
     db.from('platform_memberships').select('*').eq('company_id',id),db.from('field_stores').select('*').eq('company_id',id).order('name').limit(40),
     db.rpc('field_schedule',{p_company:id}),
     db.from('field_visits').select('id,assignment_id,agent_id,started_at,completed_at,override_reason,task_report').eq('company_id',id).order('started_at',{ascending:false}).limit(200),
-    db.from('field_shifts').select('id,agent_id,started_at,ended_at').eq('company_id',id).order('started_at',{ascending:false}).limit(100),
+    db.from('field_shifts').select('id,agent_id,started_at,ended_at,test_only').eq('company_id',id).order('started_at',{ascending:false}).limit(100),
     db.from('platform_modules').select('module,enabled').eq('company_id',id),db.from('platform_brand_versions').select('id,created_at').eq('company_id',id).order('created_at',{ascending:false}).limit(10),db.rpc('company_metrics',{p_company:id}),
   ]);if(results.some(r=>r.error))throw new Error('Company workspace unavailable');
   const [members,stores,assignments,visits,shifts,modules,versions,metrics]=results.map(r=>r.data||[]);

@@ -77,6 +77,7 @@ it('paginates the complete customer register and scopes recurring routes to thei
 it('requires location approval and rolls back automatic clock-in when verification fails',async()=>{
  const sid=await as(adminB,()=>scalar("select field_save_outlet($1,null,'Missing GPS store','Address pending verification','','Capture route',null,null) id",[companyB]));
  await as(adminB,()=>db.query("select field_set_route($1,'Capture route',$2,true)",[companyB,agentB]));
+ await as(adminB,()=>db.query('select company_field_policy($1,100,30,true)',[companyB]));
  await as(agentB,()=>expect(db.query('select field_start_visit($1,$2,6.5,3.4,5,now())',[companyB,sid])).rejects.toThrow('location needs'));
  expect((await db.query('select id from field_shifts where company_id=$1',[companyB])).rows).toHaveLength(0);
  const proposal=await as(agentB,()=>scalar('select field_propose_location($1,$2,6.5,3.4,5,now()) id',[companyB,sid]));
@@ -158,8 +159,39 @@ it('rejects cross-company store assignments and unassigned store discovery',asyn
   await as(agentA,async()=>expect((await db.query('select id from field_stores')).rows).toEqual([{id:storeA}]));
 });
 const checkin=(capture=new Date(),accuracy=5,lat=6.5,lng=3.4)=>db.query<{id:string}>('select field_checkin($1,$2,$3,$4,$5,$6) id',[companyA,assignmentA,lat,lng,accuracy,capture.toISOString()]);
-it('requires an active shift and explicit web-location policy',async()=>{
-  await as(agentA,async()=>{await expect(checkin()).rejects.toThrow('disabled');await db.query("select field_shift($1,'in')",[companyA]);});
+it('atomically verifies flagship clock-in at 50m, rejects bypasses and excludes test attendance from metrics',async()=>{
+ const flagship='10000000-0000-4000-8000-000000000001';
+ await db.query("insert into platform_memberships(company_id,user_id,role) values($1,$2,'field_agent'),($1,$3,'company_admin') on conflict(company_id,user_id) do update set role=excluded.role,active=true",[flagship,agentA,adminA]);
+ await db.query('update platform_companies set allow_web_checkin=true where id=$1',[flagship]);
+ const sid=await scalar("insert into field_stores(company_id,name,address,latitude,longitude,radius_metres,is_test) values($1,'GPS test outlet','Isolated test fixture',6.5,3.4,1000,true) returning id",[flagship]);
+ const aid=await scalar("insert into field_assignments(company_id,store_id,agent_id,visit_date) values($1,$2,$3,(now() at time zone 'Africa/Lagos')::date) returning id",[flagship,sid,agentA]);
+ const start=(lat:number,accuracy:number)=>as(agentA,()=>scalar('select field_start_visit($1,$2,$3,3.4,$4,now()) id',[flagship,sid,lat,accuracy]));
+ try{
+  await as(adminA,()=>expect(db.query('select company_field_policy($1,100,30,true)',[flagship])).rejects.toThrow('maximum'));
+  await as(adminA,()=>expect(db.query("select field_override($1,$2,'Remote test attendance should be blocked')",[flagship,aid])).rejects.toThrow('GPS verification'));
+  await as(agentA,()=>expect(db.query("select field_shift($1,'in')",[flagship])).rejects.toThrow('use GPS'));
+  await expect(start(6.5006,1)).rejects.toThrow('50 metre geofence');
+  await expect(start(6.5004,10)).rejects.toThrow('uncertainty');
+  expect((await db.query('select id from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA])).rows).toHaveLength(0);
+  const visit=await start(6.5003,5);expect(await start(6.5003,5)).toBe(visit);
+  await expect(start(6.5006,1)).rejects.toThrow('geofence');
+  expect((await db.query('select test_only,ended_at from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA])).rows).toEqual([{test_only:true,ended_at:null}]);
+  await as(agentA,async()=>{
+   const report=(await db.query<{d:{count:number;summary:{visited:number}}}>('select field_daily_report($1,(now() at time zone \'Africa/Lagos\')::date,(now() at time zone \'Africa/Lagos\')::date) d',[flagship])).rows[0].d;
+   expect(report.count).toBe(0);expect(report.summary.visited).toBe(0);
+   expect((await db.query<{d:{planned:number;completed:number}}>('select company_metrics($1) d',[flagship])).rows[0].d).toMatchObject({planned:0,completed:0});
+   expect((await db.query<{d:{total:number}}>('select field_store_directory($1) d',[flagship])).rows[0].d.total).toBe(0);
+  });
+  await as(agentB,()=>expect(db.query('select field_finish_test($1,$2)',[flagship,visit])).rejects.toThrow('Forbidden'));
+  await as(agentA,()=>db.query('select field_finish_test($1,$2)',[flagship,visit]));
+  expect((await db.query<{ended_at:string|null}>('select ended_at from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA])).rows[0].ended_at).toBeTruthy();
+  expect((await db.query<{task_report:unknown}>('select task_report from field_visits where id=$1',[visit])).rows[0].task_report).toMatchObject({test:true});
+ }finally{
+  await db.query('delete from field_visits where company_id=$1 and agent_id=$2',[flagship,agentA]);await db.query('delete from field_assignments where id=$1',[aid]);await db.query('delete from field_stores where id=$1',[sid]);await db.query('delete from field_shifts where company_id=$1 and agent_id=$2',[flagship,agentA]);await db.query("update platform_memberships set role='customer' where company_id=$1 and user_id in($2,$3)",[flagship,agentA,adminA]);
+ }
+});
+it('requires explicit web-location policy and rejects unverified standalone clock-in',async()=>{
+  await as(agentA,async()=>{await expect(checkin()).rejects.toThrow('disabled');await expect(db.query("select field_shift($1,'in')",[companyA])).rejects.toThrow('use GPS');});
   await as(adminA,()=>db.query('select company_field_policy($1,100,30,true)',[companyA]));
 });
 it('enforces fresh, accurate and uncertainty-aware locations',async()=>{
@@ -174,7 +206,7 @@ it('enforces supervisor override justification and logs the override without com
   await as(agentB,()=>expect(db.query('select field_override($1,$2,$3)',[companyA,assignmentA,'Unauthorized override attempt'])).rejects.toThrow('Forbidden'));
   const second=await as(adminA,()=>scalar("select field_save_store($1,'Second store','20 Market Street, Lagos',6.51,3.4,null) id",[companyA]));
   const next=await as(adminA,()=>scalar("select field_assign($1,$2,$3,(now() at time zone 'Africa/Lagos')::date) id",[companyA,second,agentA]));
-  await as(agentA,()=>db.query("select field_shift($1,'in')",[companyA]));
+  await db.query('insert into field_shifts(company_id,agent_id) values($1,$2)',[companyA,agentA]);
   const visit=await as(adminA,()=>scalar('select field_override($1,$2,$3) id',[companyA,next,'GPS hardware unavailable, verified attendance by supervisor.']));
   expect((await db.query('select completed_at from field_visits where id=$1',[visit])).rows).toEqual([{completed_at:null}]);
   expect((await db.query("select id from platform_audit where company_id=$1 and action='field.supervisor_override'",[companyA])).rows).toHaveLength(1);

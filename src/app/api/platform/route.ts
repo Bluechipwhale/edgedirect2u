@@ -22,6 +22,7 @@ export async function POST(req:Request){try{
     case 'location-review':rpc='field_review_location';args={p_company:c.company_id,p_request:c.request,p_approve:c.approve};break;
     case 'assignment':rpc='field_assign';args={p_company:c.company_id,p_store:c.store,p_agent:c.agent,p_date:c.date};break;
     case 'shift':rpc='field_shift';args={p_company:c.company_id,p_action:c.operation};break;
+    case 'finish-test':rpc='field_finish_test';args={p_company:c.company_id,p_visit:c.visit};break;
     case 'checkin':rpc='field_checkin';args={p_company:c.company_id,p_assignment:c.assignment,p_lat:c.latitude,p_lng:c.longitude,p_accuracy:c.accuracy,p_captured:c.captured};break;
     case 'override':rpc='field_override';args={p_company:c.company_id,p_assignment:c.assignment,p_reason:c.reason};break;
     case 'complete':rpc='field_complete';args={p_company:c.company_id,p_visit:c.visit,p_report:c.report};break;
