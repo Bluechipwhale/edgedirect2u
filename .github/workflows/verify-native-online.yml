@@ -61,8 +61,8 @@ jobs:
           for app in Store Driver; do
             package="com.edgedirect2u.$(echo "$app" | tr '[:upper:]' '[:lower:]')"
             # The hero heading is editable business content. Check the stable,
-            # accessible shopping search control instead of a former headline.
-            if [ "$app" = Store ]; then expected='Search products'; else expected='Your delivery day'; fi
+            # accessible search button emitted by Android's UI hierarchy.
+            if [ "$app" = Store ]; then expected='Submit search'; else expected='Your delivery day'; fi
             adb -s emulator-5554 install -r "artifacts/online/$app.apk"
             loaded=false
             for attempt in $(seq 1 24); do
