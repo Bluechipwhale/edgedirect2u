@@ -1,17 +1,22 @@
 import {z} from 'zod';
-import {requireRole,localMode,supabase,catalogue,records,adminProductCatalogue} from '@/lib/server';
+import {requireRole,localMode,supabase,catalogue,records,adminProductCatalogue,orders} from '@/lib/server';
 import {resourceFields} from '@/lib/resources';
 import {csv} from '@/lib/business';
 import {failure} from '@/lib/http';
 export async function GET(req:Request){try{
  const a=await requireRole(['admin']);const params=new URL(req.url).searchParams;
  const input=z.object({kind:z.string().max(60),q:z.string().max(120).default(''),state:z.enum(['all','active','draft','archived']).default('all'),owner:z.string().max(100).default('')}).parse(Object.fromEntries(params));
- if(!Object.hasOwn(resourceFields,input.kind)&&!['audit','stock_movements','merchant_ledger','orders','deliveries','refunds'].includes(input.kind))throw new Error('Unsupported export');
+ if(!Object.hasOwn(resourceFields,input.kind)&&!['audit','stock_movements','merchant_ledger','orders','deliveries','refunds','profiles'].includes(input.kind))throw new Error('Unsupported export');
  let rows:Record<string,unknown>[]=[];
  if(input.kind==='products'){
   const first=await adminProductCatalogue(a,1,input.q,input.state,input.owner);rows=first.products as unknown as Record<string,unknown>[];
   for(let page=2;rows.length<first.count;page++){if(req.signal.aborted)throw new Error('Export cancelled');const next=await adminProductCatalogue(a,page,input.q,input.state,input.owner);if(next.count!==first.count||!next.products.length)throw new Error('Catalogue changed during export. Please retry.');rows.push(...next.products as unknown as Record<string,unknown>[]);}
  }else if(input.kind==='categories')rows=(await catalogue()).categories as unknown as Record<string,unknown>[];
+ else if(input.kind==='orders'&&await localMode())rows=await orders(a) as unknown as Record<string,unknown>[];
+ else if(input.kind==='profiles'&&!await localMode()){
+  const db=await supabase();let total:number|null=null;
+  for(let offset=0;total===null||offset<total;offset+=1000){const result=await db.from('profiles').select('id,name,role,merchant_id,created_at',{count:'exact'}).order('created_at',{ascending:false}).order('id').range(offset,offset+999).abortSignal(req.signal);if(result.error)throw new Error('Account export is unavailable');if(total!==null&&result.count!==total)throw new Error('Accounts changed during export. Please retry.');total=result.count||0;rows.push(...result.data||[]);if(!result.data?.length&&offset<total)throw new Error('Incomplete accounts export. Please retry.');}
+ }
  else if(input.kind==='orders'&&!await localMode()){
   const db=await supabase();let total:number|null=null;
   for(let offset=0;total===null||offset<total;offset+=500){const result=await db.from('orders').select('*,order_items(*)',{count:'exact'}).order('created_at',{ascending:false}).order('id').range(offset,offset+499).abortSignal(req.signal);if(result.error)throw new Error('Orders export is unavailable');if(total!==null&&result.count!==total)throw new Error('Orders changed during export. Please retry.');total=result.count||0;rows.push(...result.data||[]);if(!result.data?.length&&offset<total)throw new Error('Incomplete orders export. Please retry.');}

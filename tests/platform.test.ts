@@ -24,7 +24,8 @@ afterAll(async()=>db?.close());
 it('reports every daily assignment with exact pagination, visit states and company/agent isolation',async()=>{
  await db.query('begin');try{
   const day='2026-10-18';
-  await db.query(`insert into field_stores(company_id,name,address,route) select $1,'Report outlet '||n,'Report address','Report test' from generate_series(1,205) n`,[companyA]);
+  await db.query(`insert into field_stores(company_id,name,address,route,route_sequence,routing_batch) select $1,'Report outlet '||n,'Report address','Report test',n,'test-batch' from generate_series(1,205) n`,[companyA]);
+  await as(adminA,async()=>{const result=await db.query<{d:{rows:{route_sequence:number}[]}}>("select field_store_directory($1,'','Report test','all',2) d",[companyA]);expect(result.rows[0].d.rows[0].route_sequence).toBe(41);expect(result.rows[0].d.rows.at(-1)?.route_sequence).toBe(80);});
   await db.query(`insert into field_assignments(company_id,store_id,agent_id,visit_date) select company_id,id,$2,$3 from field_stores where company_id=$1 and route='Report test'`,[companyA,agentA,day]);
   await db.query(`insert into field_visits(company_id,assignment_id,agent_id,completed_at) select company_id,id,agent_id,now() from field_assignments where company_id=$1 and visit_date=$2 and store_id in(select id from field_stores where route='Report test') order by id limit 3`,[companyA,day]);
   await db.query(`insert into field_visits(company_id,assignment_id,agent_id) select a.company_id,a.id,a.agent_id from field_assignments a where a.company_id=$1 and a.visit_date=$2 and not exists(select 1 from field_visits v where v.assignment_id=a.id) order by a.id limit 1`,[companyA,day]);
@@ -42,6 +43,13 @@ it('reports every daily assignment with exact pagination, visit states and compa
  for(const [who,scope,agent] of [[agentA,companyA,agentB],[agentB,companyA,null],[adminB,companyA,null],[outsider,companyA,null]])await as(who!,()=>expect(db.query("select field_daily_report($1,'2026-10-18','2026-10-18',$2)",[scope,agent])).rejects.toThrow('Forbidden'));
  await as(agentA,()=>expect(db.query('select * from legacy_catalogue_source')).rejects.toThrow('permission denied'));
  await db.exec('set role anon');try{await expect(db.query("select field_daily_report($1,'2026-10-18','2026-10-18')",[companyA])).rejects.toThrow('permission denied');}finally{await db.exec('reset role');}
+});
+it('clears stale route ordering when a manager changes the route or saved GPS',async()=>{
+ await db.query('begin');try{
+  await db.query("update field_stores set route_sequence=3,routing_batch='test' where id=$1",[storeA]);
+  await db.query("update field_stores set route='Manager changed route' where id=$1",[storeA]);
+  expect((await db.query('select route_sequence,routing_batch from field_stores where id=$1',[storeA])).rows[0]).toEqual({route_sequence:null,routing_batch:null});
+ }finally{await db.query('rollback');}
 });
 it('paginates the complete customer register and scopes recurring routes to their salesperson',async()=>{
  await db.query(`insert into field_stores(company_id,name,address,latitude,longitude,route,location_source) select $1,'Route customer '||n,'Verified source address',case when n%2=0 then 6.5 end,case when n%2=0 then 3.4 end,'Recurring test','missing' from generate_series(1,241) n`,[companyA]);
