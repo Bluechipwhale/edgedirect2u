@@ -1,4 +1,11 @@
 import { test,expect } from '@playwright/test';
+test('catalogue search and pagination recover from repeated or invalid URL values',async({page,request})=>{
+ await page.goto('/products?q=headphones&q=other');await expect(page.getByRole('heading',{name:'Results for “headphones”'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Studio wireless headphones'})).toBeVisible();
+ await page.goto('/products?min=Infinity&page=Infinity');await expect(page.getByRole('heading',{name:'Shop the collection.'})).toBeVisible();
+ await expect(page.getByText('Page 1 of 1',{exact:true})).toBeVisible();
+ const empty=await request.get('/api/catalogue?page=10000');expect(empty.ok()).toBe(true);const data=await empty.json();expect(data.products).toEqual([]);expect(data.count).toBeGreaterThan(0);
+});
 test('driver sign-in preserves the driver entry destination',async({page})=>{
  await page.goto('/driver');await page.getByRole('link',{name:'Driver sign in',exact:true}).click();
  await expect(page).toHaveURL(/\/login\?/);expect(new URL(page.url()).searchParams.get('next')).toBe('/driver');

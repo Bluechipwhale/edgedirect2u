@@ -6,6 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { localStore } from './local-store';
 import { defaultTheme, themeSchema, type Theme } from './theme';
 import type { Actor, Category, Product, RecordRow, Order } from './types';
+import {cataloguePage,cataloguePrice} from './catalogue-query';
 
 export function configured() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); }
 export async function supabase() {
@@ -33,6 +34,7 @@ export async function publishedTheme(): Promise<Theme> {
   try { const db = await supabase(); const { data } = await db.from('website_settings').select('config').eq('id', 'published').single(); const parsed = themeSchema.safeParse(data?.config); return parsed.success ? parsed.data : defaultTheme; } catch { return defaultTheme; }
 }
 export async function catalogue(query = '', category = '', sort = '', page = 1, merchant = '', min = 0, max = Number.MAX_SAFE_INTEGER, brand = '', available = false): Promise<{ products: Product[]; count: number; categories: Category[] }> {
+  page=cataloguePage(page);min=cataloguePrice(min,0);max=cataloguePrice(max,Number.MAX_SAFE_INTEGER);
   if (await localMode()) {
     const p = localStore().list<Product>('products').filter(p => p.active && (!query || `${p.name} ${p.brand}`.toLowerCase().includes(query.toLowerCase())) && (!category || p.category_id === category) && (!merchant || p.merchant_id === merchant) && p.price_kobo >= min && p.price_kobo <= max && (!brand || p.brand === brand) && (!available || p.stock > p.reserved));
     p.sort(sort === 'price-asc' ? (a,b) => a.price_kobo-b.price_kobo : sort === 'price-desc' ? (a,b) => b.price_kobo-a.price_kobo : (a,b) => b.created_at.localeCompare(a.created_at));
@@ -42,7 +44,14 @@ export async function catalogue(query = '', category = '', sort = '', page = 1, 
   const db = await supabase(); let req = db.from('products').select('*', { count: 'exact' }).eq('active', true);
   if (query) req = req.ilike('name', `%${query.replace(/[%_]/g, '')}%`); if (category) req = req.eq('category_id', category); if (merchant) req = req.eq('merchant_id', merchant); if (brand) req = req.eq('brand', brand); req = req.gte('price_kobo', min).lte('price_kobo', max); if (available) req = req.gt('available_stock', 0);
   req = req.order(sort.startsWith('price') ? 'price_kobo' : 'created_at', { ascending: sort === 'price-asc' }).range((page-1)*12, page*12-1);
-  const [{ data, count, error }, { data: cats }] = await Promise.all([req, db.from('categories').select('*').order('name')]); if (error) throw new Error('Catalogue unavailable');
+  const [result, categories] = await Promise.all([req, db.from('categories').select('*').order('name')]);
+  let {data,count,error}=result;const cats=categories.data;
+  // PostgREST returns 416 for a page beyond the filtered result set. Read the
+  // same filtered query's first row to recover its count, without losing scope.
+  if(error?.code==='PGRST103'){
+    const first=await req.range(0,0);error=first.error;count=first.count;data=[];
+  }
+  if (error) throw new Error('Catalogue unavailable');
   return { products: (data || []) as Product[], count: count || 0, categories: (cats || []) as Category[] };
 }
 export async function product(slug: string) { if (await localMode()) return localStore().list<Product>('products').find(p => p.slug === slug && p.active); if (!configured()) return undefined; const { data } = await (await supabase()).from('products').select('*').eq('slug', slug).eq('active', true).single(); return data as Product | undefined; }
