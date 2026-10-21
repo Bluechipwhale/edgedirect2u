@@ -7,6 +7,8 @@ test('store app manifest, download hub and install guidance',async({page,request
   await expect(page.getByRole('link',{name:'Download Windows installer'})).toHaveAttribute('href',/Edgedirect2u-Store-Setup\.exe$/);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
   const manifest=await(await request.get('/store.webmanifest')).json();expect(manifest.start_url).toBe('/?source=installed');expect(manifest.scope).toBe('/');expect(manifest.display).toBe('standalone');
+  expect(manifest.icons.map((icon:{src:string})=>icon.src)).toEqual(['/icons/brand-20261021-192.png','/icons/brand-20261021-512.png']);
+  const logo=page.locator('.main-header .official-logo img');await expect(logo).toBeVisible();await expect(logo).toHaveAttribute('src',/e-edge-direct-2u-mark-20261021\.png$/);
   const worker=await request.get('/app-sw.js');expect(worker.headers()['cache-control']).toContain('no-store');
 });
 test('offline app fallback stores no customer pages or API responses',async({page,context})=>{
@@ -15,7 +17,7 @@ test('offline app fallback stores no customer pages or API responses',async({pag
   await context.setOffline(true);await page.goto('/products');
   await expect(page.getByRole('heading',{name:'Your next good find can wait.'})).toBeVisible();
   const cached=await page.evaluate(async()=>{const names=await caches.keys();const urls=[];for(const name of names){const cache=await caches.open(name);for(const key of await cache.keys())urls.push(new URL(key.url).pathname);}return urls;});
-  expect(cached.sort()).toEqual(['/icons/driver-192.png','/icons/driver-512.png','/offline.html'].sort());
+  expect(cached.sort()).toEqual(['/icons/brand-20261021-192.png','/icons/brand-20261021-512.png','/offline.html'].sort());
   expect(await page.evaluate(()=>fetch('/api/catalogue').then(()=>false).catch(()=>true))).toBe(true);
   await context.setOffline(false);
 });

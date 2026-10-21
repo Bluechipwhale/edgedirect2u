@@ -1,4 +1,6 @@
-Version 1.0.3 opens the primary website at https://edgedirect2u.com. Vercel remains a trusted backup origin. Android package IDs and the original signing certificate are retained so these installers update previous versions.
+Version 1.0.4 uses the owner-supplied E-Edge Direct 2U logo for both Android launchers, the Windows executable and installer, and the website/PWA icons. Android adaptive icons keep the complete emblem inside the safe area. The original transparent artwork is preserved in public/brand alongside the resized assets.
+
+The apps open the primary website at https://edgedirect2u.com. Vercel remains a trusted backup origin. Android package IDs and the original signing certificate are retained so these installers update previous versions.
 
 - Driver Android app: foreground location permission is requested only when the trusted field workspace asks for a GPS check. Permission denial returns to the page without granting location access. Navigating away cancels pending requests. The Store APK does not request location permissions.
 - Driver web entry: approved van salespeople open their customer-visit workspace; delivery drivers retain their assigned delivery queue. Sign-in preserves the driver destination.

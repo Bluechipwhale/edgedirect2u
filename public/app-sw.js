@@ -1,7 +1,7 @@
-const VERSION='edge-app-shell-v2';
+const VERSION='edge-app-shell-v3-brand-20261021';
 const OFFLINE='/offline.html';
 self.addEventListener('install',event=>{
-  event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll([OFFLINE,'/icons/driver-192.png','/icons/driver-512.png'])));
+  event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll([OFFLINE,'/icons/brand-20261021-192.png','/icons/brand-20261021-512.png'])));
   self.skipWaiting();
 });
 self.addEventListener('activate',event=>{

@@ -29,7 +29,7 @@ export const themeSchema = z.object({
 export type Theme = z.infer<typeof themeSchema>;
 export const defaultTheme: Theme = {
   name: 'E-Edge Direct 2U', tagline: 'Commerce. Delivery. Distribution.', description: 'Food, household and personal care essentials for homes, shops and growing businesses.',
-  email: '', phone: '', copyright: '© 2026 E-Edge Direct 2U. All rights reserved.', logo: '/brand/e-edge-direct-2u-official.png', lightLogo: '/brand/e-edge-direct-2u-official.png', darkLogo: '', mobileLogo: '', favicon: '/icon.svg', instagram: '', facebook: '',
+  email: '', phone: '', copyright: '© 2026 E-Edge Direct 2U. All rights reserved.', logo: '/brand/e-edge-direct-2u-mark-20261021.png', lightLogo: '/brand/e-edge-direct-2u-mark-20261021.png', darkLogo: '/brand/e-edge-direct-2u-mark-20261021.png', mobileLogo: '/brand/e-edge-direct-2u-mark-20261021.png', favicon: '/icons/favicon-20261021.png', instagram: '', facebook: '',
   primary: '#B93400', secondary: '#111111', accent: '#FF4D00', background: '#FAFAF9', surface: '#FFFFFF', text: '#171717', muted: '#62615F', border: '#E8E4E0', success: '#168A54', warning: '#E7A526', error: '#D64545',
   headingFont: 'Geist', bodyFont: 'Geist', fontSize: 16, scale: 1.15, radius: 14, shadow: 'soft', width: 1360, density: 'comfortable', headerHeight: 88, sticky: true, buttonStyle: 'solid', buttonSize: 'medium', productLayout: 'four',
   announcement: 'Everyday essentials for your home and business. Browse freely, sign in at checkout.', announcementEnabled: true, announcementLink: '/products', announcementBackground: '#111111', announcementText: '#FFFFFF',

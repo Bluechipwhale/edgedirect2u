@@ -1,4 +1,4 @@
-> **18 October 2026:** Version 1.0.3 prepares primary-domain launchers, driver-only foreground location permission handling and role-aware driver entry. See [APP-RELEASE.md](APP-RELEASE.md) for release scope and commissioning requirements. The version 1.0.1 details below describe the earlier release.
+> **21 October 2026:** Version 1.0.4 adds the owner-supplied logo to the Store and Driver Android launchers and Windows executable/installer. It retains the primary-domain launchers, driver-only foreground location permissions and role-aware entry from version 1.0.3. See [APP-RELEASE.md](APP-RELEASE.md) for release scope and commissioning requirements. The version 1.0.1 details below describe the earlier release.
 
 # Web, Android and Windows apps
 
