@@ -4,6 +4,8 @@ const config: NextConfig = {
   poweredByHeader: false,
   distDir: process.env.NEXT_DIST_DIR || '.next',
   serverExternalPackages: ['node:sqlite'],
+  // Shared build hosts can report more CPUs than their process/thread quota.
+  experimental: { cpus: 2 },
   images: { remotePatterns: [{ protocol: 'https', hostname: 'images.unsplash.com' }, { protocol: 'https', hostname: '**.supabase.co' }] },
   async redirects() {
     return [{ source: '/:path*', has: [{ type: 'host', value: 'www\\.edgedirect2u\\.com' }], destination: 'https://edgedirect2u.com/:path*', permanent: true }];
