@@ -37,13 +37,13 @@ export async function catalogue(query = '', category = '', sort = '', page = 1, 
   page=cataloguePage(page);min=cataloguePrice(min,0);max=cataloguePrice(max,Number.MAX_SAFE_INTEGER);
   if (await localMode()) {
     const p = localStore().list<Product>('products').filter(p => p.active && (!query || `${p.name} ${p.brand}`.toLowerCase().includes(query.toLowerCase())) && (!category || p.category_id === category) && (!merchant || p.merchant_id === merchant) && p.price_kobo >= min && p.price_kobo <= max && (!brand || p.brand === brand) && (!available || p.stock > p.reserved));
-    p.sort(sort === 'price-asc' ? (a,b) => a.price_kobo-b.price_kobo : sort === 'price-desc' ? (a,b) => b.price_kobo-a.price_kobo : (a,b) => b.created_at.localeCompare(a.created_at));
+    p.sort((a,b)=>(sort==='price-asc'?a.price_kobo-b.price_kobo:sort==='price-desc'?b.price_kobo-a.price_kobo:b.created_at.localeCompare(a.created_at))||a.id.localeCompare(b.id));
     return { products: p.slice((page-1)*12, page*12), count: p.length, categories: localStore().list<Category>('categories').reverse() };
   }
   if (!configured()) return { products: [], count: 0, categories: [] };
   const db = await supabase(); let req = db.from('products').select('*', { count: 'exact' }).eq('active', true);
   if (query) req = req.ilike('name', `%${query.replace(/[%_]/g, '')}%`); if (category) req = req.eq('category_id', category); if (merchant) req = req.eq('merchant_id', merchant); if (brand) req = req.eq('brand', brand); req = req.gte('price_kobo', min).lte('price_kobo', max); if (available) req = req.gt('available_stock', 0);
-  req = req.order(sort.startsWith('price') ? 'price_kobo' : 'created_at', { ascending: sort === 'price-asc' }).range((page-1)*12, page*12-1);
+  req = req.order(sort.startsWith('price') ? 'price_kobo' : 'created_at', { ascending: sort === 'price-asc' }).order('id',{ascending:true}).range((page-1)*12, page*12-1);
   const [result, categories] = await Promise.all([req, db.from('categories').select('*').order('name')]);
   let {data,count,error}=result;const cats=categories.data;
   // PostgREST returns 416 for a page beyond the filtered result set. Read the
