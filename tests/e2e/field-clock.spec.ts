@@ -41,7 +41,9 @@ test('recovers from a temporary GPS failure without bypassing verification',asyn
 });
 test('rejects a 400m-accuracy phone fix and gives precise-location instructions',async({page})=>{
  const actions:unknown[]=[];await page.route('**/api/platform',route=>{actions.push(route.request().postDataJSON());return route.fulfill({json:{ok:true}});});
- await fixture(page,0,'clock',400);await page.clock.install();await page.getByLabel('Clock-in store').selectOption({label:'TEST · TEST ONLY — GPS clock-in verification'});await page.getByRole('button',{name:'Use my location & clock in'}).click();await page.clock.fastForward(31000);
+ await fixture(page,0,'clock',400);await page.clock.install();await page.getByLabel('Clock-in store').selectOption({label:'TEST · TEST ONLY — GPS clock-in verification'});await page.getByRole('button',{name:'Use my location & clock in'}).click();
+ // Observe the mocked GPS callback before advancing the capture deadline.
+ await expect(page.getByRole('status').filter({hasText:'current accuracy ±400m'})).toBeVisible();await page.clock.fastForward(31000);
  await expect(page.getByRole('status').filter({hasText:'GPS accuracy is ±400m'})).toBeVisible();expect(actions).toHaveLength(0);await expect(page.getByRole('button',{name:'Use my location & clock in'})).toBeEnabled();
 });
 test('renders the field dashboard at desktop and phone sizes without horizontal overflow',async({page})=>{
