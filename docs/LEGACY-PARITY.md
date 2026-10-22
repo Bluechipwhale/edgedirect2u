@@ -10,7 +10,7 @@ The old `edgedirect2u.com.ng/admin` menu was audited on 16 October 2026. This is
 | Refund requests and refund transactions | Partial | `/admin/refunds` and `/admin/reports` show new-site requests; complete approval/processor reconciliation and all queue filters. |
 | Categories, subcategories, sub-subcategories | Partial | `/admin/categories` supports parent categories; add the third level and reordering. |
 | Brand registry | Partial | Products retain brand names; add managed brand records and logo editing. |
-| Product attributes | Partial | Product variant options are editable JSON; add a structured attribute editor. |
+| Product attributes | Working for product options | `/admin/products` edits named option/value rows with duplicate validation, gallery images and optional previous prices. Stock changes remain in the inventory ledger. |
 | In-house products, seller products, approvals | Working for new-site catalogue | `/admin/products` searches all owners, edits all rows, and provides reversible, audited delete/restore. `/admin/merchants` manages merchant approval. |
 | Product bulk import | Missing | Add a validated preview-and-import workflow with row errors and duplicate handling. |
 | Banners | Working | `/admin/banners` supports scheduled homepage campaigns. |
@@ -22,7 +22,7 @@ The old `edgedirect2u.com.ng/admin` menu was audited on 16 October 2026. This is
 | Order transactions and refund reports | Partial | Verified receipts and refund requests are exportable from `/admin/reports`; add ledger-level reconciliation and complete pagination. |
 | Wishlisted products | Partial | Customer wishlist works; admin aggregation report remains. |
 | Order and stock reports | Partial | `/admin/reports`, `/admin/inventory` and `/staff` show new-site data; add complete filters, low-stock thresholds and exports. |
-| Customer list and export | Working for staged legacy contacts | `/admin/customers` has 3,456 private old records, search, paging and owner-only CSV. Customers regain access through independently confirmed new sign-in; no old password was copied. |
+| Customer list and export | Working for staged legacy contacts and operational outlets | `/admin/customers` has 3,456 private old records, search, paging and owner-only CSV. Its edit links open `/admin/outlets` for company-authorized contact, address, GPS and route changes. Original account history stays separate. Customers regain access through independently confirmed new sign-in; no old password was copied. |
 | Customer reviews | Working for new-site paid purchases | `/admin/reviews` moderates verified-purchase reviews. |
 | Customer wallet and loyalty points | Missing | Requires reconciliation of old balances and liabilities before activation. |
 | Seller add/list and withdrawals | Partial | `/admin/merchants` handles stores and approval; withdrawals/payout requests remain. |

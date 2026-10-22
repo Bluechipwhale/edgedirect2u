@@ -23,3 +23,12 @@ it('uses the approved 100m company boundary despite smaller or larger legacy ove
  expect(storeRadius({id:'other-company',geofence_metres:100},{radius_metres:150})).toBe(150);
  const distance=metresBetween({latitude:6.5,longitude:3.4},{latitude:6.501,longitude:3.4});expect(distance).toBeGreaterThan(110);expect(distance).toBeLessThan(112);
 });
+it('recovers from a temporary Android position error before the deadline',async()=>{
+ const f=fixture(),result=readFieldLocation(f.geo);f.fail(2);expect(f.geo.clearWatch).not.toHaveBeenCalled();f.send(point(5));expect((await result).accuracy).toBe(5);expect(f.geo.clearWatch).toHaveBeenCalledWith(7);
+});
+it('replaces a best fix that has become stale with a fresh usable reading',async()=>{
+ vi.useFakeTimers();const f=fixture(),result=readFieldLocation(f.geo);f.send(point(35,6.5,Date.now()-54000));await vi.advanceTimersByTimeAsync(2000);f.send(point(45));await vi.advanceTimersByTimeAsync(28000);expect((await result).accuracy).toBe(45);
+});
+it('stops a persistently unavailable location at the bounded deadline',async()=>{
+ vi.useFakeTimers();const f=fixture(),result=readFieldLocation(f.geo),rejection=expect(result).rejects.toThrow('No fresh GPS reading arrived');f.fail(2);await vi.advanceTimersByTimeAsync(30000);await rejection;expect(f.geo.clearWatch).toHaveBeenCalledWith(7);
+});

@@ -81,3 +81,8 @@ it('deletes reversibly without losing historical stock or publication state',asy
   await as(admin,()=>db.query("select set_product_archived('draft-item',false)"));
   expect((await db.query<{active:boolean}>("select active from products where id='draft-item'")).rows[0].active).toBe(false);
 });
+it('persists admin gallery, previous-price and structured option edits',async()=>{
+ const data={...productData('QA complete editor','qa-merchant'),previous_price_kobo:150025,images:['https://example.com/front.jpg','https://example.com/back.jpg'],options:{Pack:['Single','Carton']}};
+ await as(admin,()=>db.query('select save_product($1,$2::jsonb)',['merchant-item',JSON.stringify(data)]));
+ const row=(await db.query<{previous_price_kobo:number;images:string[];options:Record<string,string[]>}>("select previous_price_kobo,images,options from products where id='merchant-item'")).rows[0];expect(row).toEqual({previous_price_kobo:150025,images:data.images,options:data.options});
+});

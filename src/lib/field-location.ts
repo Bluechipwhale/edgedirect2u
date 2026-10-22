@@ -12,13 +12,17 @@ export function readFieldLocation(geo:Geo,options:{signal?:AbortSignal;target?:{
   const stop=()=>{if(id!==undefined)geo.clearWatch(id);clearTimeout(timer);options.signal?.removeEventListener('abort',abort);};
   const finish=(error?:Error,p?:GeolocationPosition)=>{if(settled)return;settled=true;stop();if(error)reject(error);else if(p)resolve({latitude:p.coords.latitude,longitude:p.coords.longitude,accuracy:p.coords.accuracy,captured:new Date(p.timestamp).toISOString()});};
   const abort=()=>finish(new DOMException('Location request cancelled','AbortError'));
-  const timer=setTimeout(()=>{if(best&&best.coords.accuracy<=50&&Date.now()-best.timestamp<55000)finish(undefined,best);else finish(new Error(best?`GPS accuracy is ±${Math.ceil(best.coords.accuracy)}m. Enable precise location and try again outdoors at the store.`:'No fresh GPS reading arrived. Enable location services and precise location, then try again at the store.'));},options.timeoutMs??30000);
+  const timer=setTimeout(()=>{if(best&&best.coords.accuracy<=50&&Date.now()-best.timestamp<55000)finish(undefined,best);else finish(new Error(best&&Date.now()-best.timestamp<55000?`GPS accuracy is ±${Math.ceil(best.coords.accuracy)}m. Enable precise location and try again outdoors at the store.`:'No fresh GPS reading arrived. Enable location services and precise location, then try again at the store.'));},options.timeoutMs??30000);
   if(options.signal?.aborted){abort();return;}options.signal?.addEventListener('abort',abort,{once:true});
   try{id=geo.watchPosition(p=>{
+   if(settled)return;
    const c=p.coords;if(![c.latitude,c.longitude,c.accuracy,p.timestamp].every(Number.isFinite)||Math.abs(c.latitude)>90||Math.abs(c.longitude)>180||c.accuracy<0||Date.now()-p.timestamp>55000||p.timestamp>Date.now()+5000)return;
-   if(!best||c.accuracy<best.coords.accuracy)best=p;options.onProgress?.(c.accuracy);
+   if(!best||Date.now()-best.timestamp>=55000||c.accuracy<=best.coords.accuracy)best=p;options.onProgress?.(c.accuracy);
    const inside=options.target&&metresBetween(c,options.target)+c.accuracy<=options.target.radius;
    if(c.accuracy<=50&&(c.accuracy<=15||inside))finish(undefined,p);
-  },error=>{if(error.code===1)finish(new Error('Location permission was denied. Allow location for this website in your browser, then enable precise location in your phone settings. Open Location help below for the steps.'));else if(!best)finish(new Error('GPS is unavailable. Turn on phone location, move outdoors at the outlet, and retry.'));},{enableHighAccuracy:true,maximumAge:0,timeout:options.timeoutMs??30000});if(settled)geo.clearWatch(id);}catch{finish(new Error('Location could not start. Open the secure field page in your phone browser and allow precise location.'));}
+  },error=>{if(error.code===1)finish(new Error('Location permission was denied. Allow location for this website in your browser, then enable precise location in your phone settings. Open Location help below for the steps.'));
+   // Position unavailable / timeout can be temporary while Android acquires GPS.
+   // Keep the watch active until the bounded deadline; permission denial is final.
+  },{enableHighAccuracy:true,maximumAge:0,timeout:options.timeoutMs??30000});if(settled)geo.clearWatch(id);}catch{finish(new Error('Location could not start. Open the secure field page in your phone browser and allow precise location.'));}
  });
 }

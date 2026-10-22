@@ -1,0 +1,23 @@
+import {test,expect} from '@playwright/test';
+test('admin edits prices, gallery and structured options, then deletes and restores a product',async({page,request})=>{
+ const id='qa-editor-controls',name='QA editor controls product';
+ const catalogue=await(await request.get('/api/catalogue')).json();
+ const seed=await request.post('/api/manage',{headers:{origin:'http://127.0.0.1:3100'},data:{kind:'products',id,data:{name,slug:'qa-editor-controls',category_id:catalogue.categories[0].id,brand:'QA',merchant_id:'edge',merchant_name:'Edgedirect2u',price_kobo:100000,image:'/icons/brand-20261021-192.png',images:[],description:'Isolated local editor verification product.',options:{},active:false,featured:false}}});expect(seed.ok()).toBe(true);
+ await page.goto('/admin/products?q=QA%20editor%20controls');await page.getByRole('button',{name:`Edit ${name}`,exact:true}).click();
+ const editor=page.getByRole('dialog',{name:'Edit products'});await expect(editor).toBeVisible();
+ await editor.getByLabel('Price (₦)',{exact:true}).fill('1200.50');await editor.getByLabel('Previous price (₦, optional)',{exact:true}).fill('1500.25');
+ await editor.getByLabel('Gallery image URLs').fill('/icons/brand-20261021-192.png\n/icons/brand-20261021-512.png');
+ await editor.getByRole('button',{name:'Add option',exact:true}).click();await expect(editor.getByRole('button',{name:'Save product',exact:true})).toBeDisabled();
+ await editor.getByLabel('Option name',{exact:true}).fill('Pack');await editor.getByLabel('Option values',{exact:true}).fill('Single, Carton');
+ await editor.getByRole('button',{name:'Save product',exact:true}).click();await expect(editor).toBeHidden();
+ await page.getByRole('button',{name:`Edit ${name}`,exact:true}).click();
+ await expect(editor.getByLabel('Price (₦)',{exact:true})).toHaveValue('1200.5');await expect(editor.getByLabel('Previous price (₦, optional)',{exact:true})).toHaveValue('1500.25');
+ await expect(editor.getByLabel('Gallery image URLs')).toHaveValue('/icons/brand-20261021-192.png\n/icons/brand-20261021-512.png');await expect(editor.getByLabel('Option values',{exact:true})).toHaveValue('Single, Carton');
+ await editor.getByRole('button',{name:'Add option',exact:true}).click();await editor.getByLabel('Option name',{exact:true}).last().fill('pack');await editor.getByLabel('Option values',{exact:true}).last().fill('Other');await expect(editor.getByRole('alert')).toContainText('must be unique');
+ await editor.getByRole('button',{name:'Close editor',exact:true}).click();await page.getByRole('button',{name:`Edit ${name}`,exact:true}).click();await expect(editor.getByRole('button',{name:'Save product',exact:true})).toBeEnabled();
+ await page.setViewportSize({width:390,height:844});expect(await editor.evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);await page.screenshot({path:'artifacts/storefront-admin-product-editor.png',fullPage:true});
+ await editor.getByRole('button',{name:'Cancel',exact:true}).click();await page.getByRole('button',{name:`Delete ${name}`,exact:true}).click();await page.getByRole('dialog',{name:'Delete product'}).getByRole('button',{name:'Delete product',exact:true}).click();
+ await expect(page.getByRole('button',{name:`Edit ${name}`,exact:true})).toHaveCount(0);
+ await page.goto('/admin/products?q=QA%20editor%20controls&state=archived');await page.getByRole('button',{name:`Restore ${name}`,exact:true}).click();await page.getByRole('dialog',{name:'Restore product'}).getByRole('button',{name:'Restore product',exact:true}).click();
+ await page.goto('/admin/products?q=QA%20editor%20controls&state=draft');await expect(page.getByRole('button',{name:`Edit ${name}`,exact:true})).toBeVisible();
+});
