@@ -27,7 +27,7 @@ The owner can edit operational outlets only with an active company administrator
 4. Tap **Use my location & clock in** and wait for confirmation. Temporary GPS acquisition errors are retried within the 30-second capture window.
 5. The flagship boundary is 100 metres. GPS accuracy must be 50 metres or better, and reported distance plus uncertainty must fit inside the boundary. A ±400-metre reading cannot verify presence at the outlet.
 6. If accurate GPS places the driver outside the saved outlet position, submit a location for manager review. This does not clock in or move the outlet automatically. Managers must check and approve corrections.
-7. Complete the visit report before starting another visit. Test outlets are excluded from performance figures.
+7. Complete the visit report before starting another visit. An unfinished visit from an earlier day remains available through **Continue visit**, including when it is older than the recent-history window. Test outlets are excluded from performance figures.
 
 Location is captured on request; the app does not use background tracking or invented fallback coordinates. The controlled browser tests use sample coordinates and never create live attendance.
 

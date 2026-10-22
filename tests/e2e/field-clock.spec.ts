@@ -39,6 +39,13 @@ test('recovers from a temporary GPS failure without bypassing verification',asyn
  await fixture(page,80,'clock',5,true);await page.getByLabel('Clock-in store').selectOption({label:'TEST · TEST ONLY — GPS clock-in verification'});await page.getByRole('button',{name:'Use my location & clock in'}).click();
  await expect(page.getByText('Clock-in confirmed',{exact:true})).toBeVisible();expect(actions).toHaveLength(1);expect(actions[0]).toMatchObject({action:'start-store',accuracy:5});
 });
+test('continues an unfinished earlier-day visit and submits its report before another clock-in',async({page})=>{
+ const actions:Record<string,unknown>[]=[];await page.route('**/api/platform',route=>{actions.push(route.request().postDataJSON());return route.fulfill({json:{ok:true}});});
+ await fixture(page,0,'previous-visit');await page.getByRole('button',{name:'Continue visit',exact:true}).click();
+ await expect(page.getByText('This visit is still open from 2026-09-01.',{exact:false})).toBeVisible();
+ await page.getByLabel('I checked the store’s stock').check();await page.getByLabel('I spoke with the store contact').check();await page.getByLabel('Visit report',{exact:true}).fill('Completed the previously opened outlet visit.');await page.getByRole('button',{name:'Complete store visit',exact:false}).click();
+ await expect.poll(()=>actions.length).toBe(1);expect(actions[0]).toMatchObject({action:'complete',visit:'30000000-0000-4000-8000-000000000090',report:{stock_checked:true,contact_confirmed:true}});
+});
 test('rejects a 400m-accuracy phone fix and gives precise-location instructions',async({page})=>{
  const actions:unknown[]=[];await page.route('**/api/platform',route=>{actions.push(route.request().postDataJSON());return route.fulfill({json:{ok:true}});});
  await fixture(page,0,'clock',400);await page.clock.install();await page.getByLabel('Clock-in store').selectOption({label:'TEST · TEST ONLY — GPS clock-in verification'});await page.getByRole('button',{name:'Use my location & clock in'}).click();
