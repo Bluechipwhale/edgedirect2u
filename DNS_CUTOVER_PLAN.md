@@ -1,6 +1,6 @@
 # DNS cutover plan — review required
 
-Date: 26 October 2026. **No DNS changes have been made. New WhoGoHost destination is unknown. Do not execute a cutover yet.**
+Date: 26 October 2026. **Production website and mail DNS are unchanged. The owner approved only the staging A record: preview → 102.68.97.69, TTL 300. That record is saved in Hostinger and resolves publicly. No production cutover is approved.**
 
 ## Observed current records
 
@@ -29,12 +29,12 @@ DKIM and unknown TXT/verification subdomains cannot be enumerated reliably by gu
 
 The signed-in zone editor was inspected on 26 October. Its 12 visible records are recorded in `.data/migration-20261026/hostinger-dns-zone-before.json`, captured before the file-download permission refusal. The exact current website mapping is **ALIAS @ to edgedirect2u.com.cdn.hstgr.net, TTL 300**, and **CNAME www to www.edgedirect2u.com.cdn.hstgr.net, TTL 300**. Preserve these exact targets for rollback rather than sampled CDN IPs. The three verified DKIM CNAMEs are hostingermail-a._domainkey, hostingermail-b._domainkey and hostingermail-c._domainkey, pointing to their corresponding hostingermail-a/b/c.dkim.mail.hostinger.com targets, each TTL 300. MX priorities remain 5/10 with configured TTL 14400; SPF and DMARC TTLs are 3600. The provider export-file download was declined by the browser permission gate and was stopped; the owner must obtain that file manually. DNSSEC/DS status still needs confirmation. No records were added or edited.
 
-## Proposed changes, intentionally incomplete
+## Approved staging and proposed production changes
 
 | Name | Change to review | New value |
 |---|---|---|
-| Staging hostname selected with provider | Add only the exact provider-approved A/AAAA/CNAME needed for staging, if a record is required | **BLOCKED — provider value and approval missing** |
-| `edgedirect2u.com` apex | After accepted staging, replace only the exported Hostinger website/CDN mapping with the provider-supported target | **BLOCKED — obtain exact destination from DirectAdmin/support** |
+| `preview.edgedirect2u.com` | Owner-approved A record added; separate Node 24 app registered on WhoGoHost | `102.68.97.69`, TTL 300; trusted TLS and actual-app acceptance pending |
+| `edgedirect2u.com` apex | After accepted staging, replace only the exported Hostinger website/CDN mapping with the provider-supported target | WhoGoHost zone identifies `102.68.97.69`; **BLOCKED until staging and explicit production approval** |
 | `www.edgedirect2u.com` | Replace the current CDN CNAME only with the approved website destination; preserve canonical redirect and certificate coverage | **BLOCKED — exact target/redirect unconfirmed** |
 | `.com` website AAAA | Update/remove only if an existing address would misroute IPv6 traffic; use only provider-supplied IPv6 | **BLOCKED — authoritative zone review** |
 | All NS, MX, mail-host addresses, SPF/DKIM/DMARC, verification records | No migration change | Preserve |

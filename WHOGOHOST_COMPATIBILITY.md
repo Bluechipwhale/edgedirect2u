@@ -9,17 +9,17 @@ Record account-specific evidence, not a product marketing claim:
 | Check | Required evidence | Current result |
 |---|---|---|
 | Plan/server identity | Actual plan/server | PASS: Deluxe 30GB DirectAdmin at da42.host-ww.net; terminal reports x86_64 and glibc 2.28 |
-| Node runtime availability | Actual selector | PASS: Node 24.21.0 is offered. Default 20.20.2 must not be used. Activated binary and CLI flag test pending |
-| Runner interface | Actual selector controls | PASS: CloudLinux Node.js selector offers production mode, root/URL, startup filename, Passenger log and environment fields; no application created yet |
+| Node runtime availability | Actual selector and activated terminal | PASS: Node 24.21.0 activated; npm 11.19.0, Git 2.43.7 and `--use-system-ca` verified. Default 20.20.2 must not be used |
+| Runner interface | Actual selector controls | PASS: CloudLinux Node.js preview created at private `/home/edgedire/apps/edgedirect2u-preview`, production mode, separate preview hostname, startup and private Passenger log controls. Actual Next lifecycle acceptance pending |
 | Startup | Generated Next standalone `server.js` is accepted; startup filename, working directory and env injection confirmed | BLOCKED |
 | Process management | Automatic start/restart, idle wake, managed lifecycle, no detached terminal process required | BLOCKED |
 | Port/proxy | Exact assigned port/socket behavior and HTTPS/Host forwarding; no guessed port | BLOCKED |
 | Build/install | npm + dev dependencies, lockfile install, allowed build time, native Linux modules and outbound package-registry access | BLOCKED |
 | Limits | Actual account quotas | PASS: 30 GB disk / 60 GB bandwidth; resource history shows CPU 200%, PMEM 2G, IO 16 MB/s, IOPS 1024, EP 40, NPROC 100. Live Current usage unavailable; build/upload/time limits and app-specific performance still pending |
-| App directories | Private source/runtime root outside all domain document roots; only public assets accessible | BLOCKED |
+| App directories | Private source/runtime root outside all domain document roots; only public assets accessible | PASS for configured paths: app under `/home/edgedire/apps`, source checkout in `source/`; preview document root `/home/edgedire/domains/preview.edgedirect2u.com/public_html`. Public-path denial tests pending |
 | Connectivity | Outbound HTTPS to the intended Supabase project, Storage, Paystack and required image hosts with certificate validation | BLOCKED |
 | TLS/staging | Provider-approved test hostname or hosts-file method; valid trusted certificate before sign-in/GPS/payment tests | BLOCKED |
-| Operations | Shell, deployment and logs | PASS for authenticated browser terminal. External SSH, Git, active-app logs/restart remain BLOCKED |
+| Operations | Shell, deployment and logs | PASS for authenticated browser terminal, Git and successful public repository clone; external SSH and active Next app log/restart acceptance pending |
 | Scheduling | Existing Supabase jobs remain authoritative; verify recent successful runs | See migration test record |
 | WebSockets/workers | Not required by the inspected application; reconsider only if new evidence appears | NOT APPLICABLE |
 

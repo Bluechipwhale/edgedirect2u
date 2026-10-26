@@ -15,6 +15,7 @@ Names and descriptions only. Existing private values stay in the approved secret
 | `PAYSTACK_PUBLIC_KEY` | Server only / optional | Retained privately by owner request; the current redirect checkout does not read it. Do not add a public-prefixed variant |
 | `CRON_SECRET` | Server only / optional | Authenticates the optional HTTP reservation-expiry endpoint. Not needed when existing Supabase Cron is healthy; presence is not scheduling evidence |
 | `NODE_OPTIONS` | Provider runtime / optional | Allows the existing system-CA Node flag when the manager starts a filename directly; do not use debug/inspect options on the public server |
+| `RUNTIME_ENV_FILE` | Managed-host startup / optional | Absolute path to an owner-only private dotenv file outside every document root and outside the checkout; only the managed root loader reads it. Used because this CloudLinux manager writes its own environment table into document-root `.htaccess` |
 | `PORT` | Provider runtime | Runner-assigned listening port where its deployment model uses a TCP port. Preserve the provider contract; do not assume port 3000 or override a reserved port |
 | `HOSTNAME` | Provider runtime | Bind interface required by the verified runner; never use an internal bind address as the public site URL |
 | `NEXT_DIST_DIR` | Build tooling / optional | Existing output directory override; standalone packaging expects the standard directory and preflight rejects other values |
@@ -24,5 +25,7 @@ Names and descriptions only. Existing private values stay in the approved secret
 | `LOCAL_DATABASE_PATH` | Local development only | SQLite fixture file; never migrate it as the production database |
 
 SMTP settings belong to Supabase Auth's existing SMTP configuration, not this app's runtime. Keep the current mailbox credentials and sender unchanged. Android signing and Windows build credentials remain private CI concerns and are not WhoGoHost runtime variables.
+
+The owner instructed that `edgedirect2u.vercel.app` remain untouched as a backup. This migration must not update its environment, settings or production deployment.
 
 Set public values explicitly **before** building and keep them equal at runtime. Next inlines public values during builds; restart alone is insufficient to change them. Use a clean checkout without local/private dotenv files when running `build:whogohost`; it deliberately does not load this computer's `.env.local`. Inspect all artifact contents before upload, including hidden files. Set privileged values privately on the target only after verifying its identity and isolation. Never copy production secrets into a public build artifact.

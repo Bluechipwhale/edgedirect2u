@@ -16,14 +16,19 @@ Date: 26 October 2026. Allowed outcomes: **PASS**, **FAIL**, **BLOCKED**, **NOT 
 | Production dependency advisory check before patch | FAIL | npm audit reports critical Next 16.4.0 advisories; isolated 16.4.3 candidate patch is being prepared. Existing live versions remain unchanged |
 | New hosting preflight / lint / types / patched production dependency audit | PASS | Six preflight tests pass on installed Next 16.4.3; lint/types pass; npm audit reports zero vulnerabilities |
 | Legacy .com.ng domain | NOT APPLICABLE to cutover | Its homepage timed out during an initial read; owner subsequently confirmed it is outside this migration. No change will be made |
-| Complete authoritative DNS export / DKIM / configured TTLs | BLOCKED | Partial public snapshots only; provider account needed |
-| WhoGoHost deployment acceptance | BLOCKED | Node 24.21.0 selector, Passenger controls and terminal verified. No app created/build/start/restart/HTTPS acceptance yet; CPU/RAM limits and staging identity still pending |
+| Complete provider DNS export file | BLOCKED | Exact 12-record inventory, DKIM and configured TTLs inspected in authenticated Hostinger UI. The separate export download was declined; owner must obtain it manually. DNSSEC/DS status pending |
+| WhoGoHost deployment acceptance | BLOCKED | Separate Node 24.21.0 production-mode preview app created; activated npm/Git, private source clone and clean dependency install pass. CPU 200%, RAM 2G verified. Actual build/start/restart/trusted HTTPS acceptance pending |
 | Physical phone clock-in baseline | PASS (historical) | Owner confirmed “Clock-in confirmed” on Timothy's Android Chrome on 22 October 2026. Does not verify a new host/origin |
 | Custom WebSocket server / background queue worker | NOT APPLICABLE | None found in application source; existing scheduled tasks run in Supabase |
 
 | Full local suite after patch | BLOCKED by local resources | 133/159 tests completed before four worker out-of-memory exits while lint/types ran concurrently. No assertion failure was reported. A complete isolated/Linux run is required before acceptance |
 | Source rollback rehearsal | PASS | Separate private Git clone reproduces the saved package file hash; development snapshot quick_check is OK |
 | Authoritative website/mail record inventory | PASS for inspected zone | Twelve records, exact ALIAS/CNAME/TTLs and three DKIM records recorded from authenticated Hostinger UI; separate export-file download was declined and remains manual |
+| Full patched Linux CI | PASS | Commit `9e64245`, Actions run `40368544335`: clean install, lint, types, unit suite, dependency audit, browser suite, Webpack standalone build and root-entry production smoke all pass. Prior lockfile and editable-copy smoke failures were corrected; this does not prove the WhoGoHost runner |
+| Preview-only DNS | PASS | Owner explicitly approved preview A → 102.68.97.69, TTL 300. Saved record and public resolution verified; main domain, www, nameservers and mail records preserved |
+| Actual WhoGoHost Linux build | PASS | Private checkout at `9e64245`; locked installation and Webpack standalone build completed within the purchased account's limits, public-only build environment |
+| Trusted preview TLS / public routes | PASS | Automatically renewed valid certificate for preview; 72/72 preview requests pass, including catalogue, product/category pages and portal sign-in routes. A provider placeholder masking `/` was moved into a private backup |
+| Private credential placement | IN PROGRESS | Owner approved private runtime keys. Manager values were observed in document-root `.htaccess`, so privileged keys are being stored in a 700/600 private directory/file and loaded only at managed startup; no key was entered into the panel environment table |
 
 ## WhoGoHost staging matrix — all currently BLOCKED
 
