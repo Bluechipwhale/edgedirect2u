@@ -1,6 +1,6 @@
 # Edgedirect2u migration audit
 
-Research date: **26 October 2026 (Africa/Lagos)**. Status: **WhoGoHost public preview deployed; NO-GO for production website DNS cutover** until private runtime and authenticated acceptance are complete. A later owner request separately authorized incoming-mail routing repair; its saved DNS changes and pending receipt test are documented in [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md).
+Research date: **26 October 2026 (Africa/Lagos)**; mail follow-up **27 October 2026**. Status: **WhoGoHost public preview deployed; NO-GO for production website DNS cutover** until private runtime and authenticated acceptance are complete. A later owner request separately authorized incoming-mail routing repair. Basic incoming/outgoing mail acceptance now passes with actual local/Gmail recipient receipt; all eleven existing business mailboxes have separate Inbox/Junk views. Evidence and the precise test scope are documented in [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md).
 
 ## Source and domains
 

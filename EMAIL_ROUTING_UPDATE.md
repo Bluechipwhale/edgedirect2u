@@ -33,7 +33,8 @@ The owner explicitly authorized a plain delivery test from `olawale@edgedirect2u
 |---|---|---|
 | Olawale to info | Exim `1xLTLm-0000000AAr6-0EwD`, 26 October 23:39:30 Lagos; delivered in the server log and the actual test message verified in info's Inbox | PASS |
 | Olawale to owner Gmail | Exim `1xLTSM-0000000AFtJ-1yyW`, 26 October 23:46:18 Lagos; TLS-verified relay acceptance followed by the owner's explicit confirmation that the message arrived | PASS |
-| Owner Gmail reply to Olawale | Owner confirmed replying. Inbox, spam and server tracking inspected at 23:57 Lagos; no incoming message recorded yet | PENDING; do not claim incoming delivery PASS |
+| Original owner Gmail reply to Olawale | Owner confirmed replying. That original message was not observed in the recipient Inbox or tracking log during follow-up | Not verified for that original message; see the successful fresh incoming test below |
+| Approved fresh Gmail test to Olawale | Exim `1xLUTe-0000000B4Nu-2n54`, 27 October 00:51:48 Lagos; incoming from `mail-yx1-f47.google.com`, Gmail DKIM verified, TLS 1.3; actual test message opened in Olawale's Inbox | PASS |
 
 The outbound relay's `Delivered` status alone was not treated as proof of Gmail Inbox receipt; that proof came from the owner. Public Google DNS still resolves the new MX and mail address correctly. There is no reason to keep changing working DNS while tracing the incoming reply.
 
@@ -47,7 +48,9 @@ Roundcube's Junk special-folder preference was unassigned. Mapping it to the exi
 
 An independent MXToolbox SMTP probe at 00:29 Lagos reached `102.68.97.69` on port 25, received the WhoGoHost Exim greeting and STARTTLS advertisement, and found no open relay. This resolves the earlier workstation-only port-25 diagnostic limitation; it does not prove receipt of a message. The probe warned about connection latency and a missing PTR record, with the missing PTR independently confirmed through Google DNS. Reverse DNS is controlled by the hosting provider. Outgoing mail currently uses the provider's separately verified MailChannels relay.
 
-The original Gmail reply still had no incoming delivery record at the last follow-up check. A fresh owner-sent Gmail test was requested. One additional plain test draft from the already signed-in Gmail account to Olawale was prepared but left unsent pending explicit authorization for that different sender. Do not record incoming acceptance PASS until the real recipient message or an equivalent delivery result is verified.
+The owner explicitly approved the additional plain test from the already signed-in Gmail account to Olawale. It was sent once at approximately 00:51 Lagos on 27 October and received in Olawale's actual Inbox within about a minute. The server receipt independently records incoming delivery at 00:51:48 Lagos, Gmail DKIM verification and TLS 1.3. The message subject is `Incoming delivery verification — 27 October 2026`; no customer information was included. Roundcube currently displays server time one hour ahead of Lagos, so the same message appears there at 01:51. The actual Inbox and separate Junk folder are visible together in the saved proof.
+
+Basic mail acceptance now passes in both directions, with separate recipient Inbox receipt verified for the local info test and the external Gmail-to-Olawale test. This does not claim that the original missing reply was recovered, that every individual mailbox has received an external test, or that the separate website migration/authentication/payment acceptance is complete. Previously bounced messages need to be resent. No further DNS or website change was needed for the successful fresh test.
 
 ## Separate recovery paths
 
