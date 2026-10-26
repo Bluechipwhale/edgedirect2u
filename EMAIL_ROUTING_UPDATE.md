@@ -39,6 +39,16 @@ The outbound relay's `Delivered` status alone was not treated as proof of Gmail 
 
 Existing mail at Hostinger has not been copied or deleted. Old DNS answers had a configured 14400-second TTL, so cached senders can continue reaching Hostinger until their caches expire. Previously bounced messages need to be resent.
 
+## Follow-up, 27 October 2026 (Lagos)
+
+The owner requested separate Inbox and Spam views and individual recipient delivery. The server already uses **User Spambox**, rather than a shared catch-all spam folder; it does not automatically delete high-scoring spam. The forwarder registry contains zero entries. Those server settings were inspected and preserved.
+
+Roundcube's Junk special-folder preference was unassigned. Mapping it to the existing `INBOX.spam` folder makes Inbox and Junk appear as separate top-level choices while retaining the server's actual automatic spam destination. This preference was saved and the resulting folder tree verified for all eleven existing business mailboxes: `info`, `olawale`, `hr`, `jtaiwo`, `vosigweh`, `ochidinma`, `moderntrade`, `neighbourhood`, `bthompson`, `oladipodeborah` and `torioke`. The provider's default `edgedire` account was excluded. No folder, message, mailbox password or forwarding rule was deleted or changed. Per-mailbox screenshots and the verification receipt are kept in the ignored repair directory.
+
+An independent MXToolbox SMTP probe at 00:29 Lagos reached `102.68.97.69` on port 25, received the WhoGoHost Exim greeting and STARTTLS advertisement, and found no open relay. This resolves the earlier workstation-only port-25 diagnostic limitation; it does not prove receipt of a message. The probe warned about connection latency and a missing PTR record, with the missing PTR independently confirmed through Google DNS. Reverse DNS is controlled by the hosting provider. Outgoing mail currently uses the provider's separately verified MailChannels relay.
+
+The original Gmail reply still had no incoming delivery record at the last follow-up check. A fresh owner-sent Gmail test was requested. One additional plain test draft from the already signed-in Gmail account to Olawale was prepared but left unsent pending explicit authorization for that different sender. Do not record incoming acceptance PASS until the real recipient message or an equivalent delivery result is verified.
+
 ## Separate recovery paths
 
 A website rollback must preserve the current mail records above. Do not automatically restore the historical Hostinger MX values when rolling back the website.
