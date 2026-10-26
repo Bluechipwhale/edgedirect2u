@@ -12,7 +12,8 @@ async function availablePort(){
 async function main(){
   const port=await availablePort();
   const origin=`http://127.0.0.1:${port}`;
-  const child=spawn(process.execPath,['--use-system-ca','.next/standalone/server.js'],{env:{...process.env,NODE_ENV:'production',HOSTNAME:'127.0.0.1',PORT:String(port)},stdio:['ignore','pipe','pipe'],windowsHide:true});
+  const entry=process.argv.includes('--root-entry')?'server.js':'.next/standalone/server.js';
+  const child=spawn(process.execPath,['--use-system-ca',entry],{env:{...process.env,NODE_ENV:'production',HOSTNAME:'127.0.0.1',PORT:String(port)},stdio:['ignore','pipe','pipe'],windowsHide:true});
   let logs='';child.stdout.on('data',c=>logs+=c);child.stderr.on('data',c=>logs+=c);
   try{
     let ready=false;
@@ -28,7 +29,9 @@ async function main(){
     if(!health.ok)throw new Error('Live database health check failed');
     const home=await fetch(origin,{signal:AbortSignal.timeout(20000)});
     const html=await home.text();
-    if(!home.ok || !html.includes('Your everyday.') || !home.headers.get('content-security-policy')?.includes("'strict-dynamic'"))throw new Error('Production storefront or CSP check failed');
+    if(!home.ok)throw new Error(`Production storefront returned HTTP ${home.status}`);
+    if(!html.includes('class="storefront-home"') || !html.includes('<h1>') || !html.includes('href="/products"'))throw new Error('Production storefront content did not render');
+    if(!home.headers.get('content-security-policy')?.includes("'strict-dynamic'"))throw new Error('Production storefront CSP check failed');
     if(home.headers.has('x-powered-by'))throw new Error('Framework header should be disabled');
     if(!process.env.PAYSTACK_SECRET_KEY || !process.env.SUPABASE_SERVICE_ROLE_KEY){
       const checkout=await fetch(origin+'/api/checkout',{method:'POST',headers:{Origin:new URL(process.env.NEXT_PUBLIC_SITE_URL).origin,'Content-Type':'application/json'},body:JSON.stringify({key:require('node:crypto').randomUUID(),items:[{product_id:'unavailable-production-smoke-test',quantity:1,options:{}}],address:{name:'Smoke Test',email:'test@example.com',phone:'08012345678',street:'123 Test Street',city:'Lagos',state:'Lagos'},coupon:''}),signal:AbortSignal.timeout(15000)});
