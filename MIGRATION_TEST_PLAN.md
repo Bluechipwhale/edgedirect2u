@@ -24,13 +24,16 @@ Date: 26 October 2026. Allowed outcomes: **PASS**, **FAIL**, **BLOCKED**, **NOT 
 | Full local suite after patch | BLOCKED by local resources | 133/159 tests completed before four worker out-of-memory exits while lint/types ran concurrently. No assertion failure was reported. A complete isolated/Linux run is required before acceptance |
 | Source rollback rehearsal | PASS | Separate private Git clone reproduces the saved package file hash; development snapshot quick_check is OK |
 | Authoritative website/mail record inventory | PASS for inspected zone | Twelve records, exact ALIAS/CNAME/TTLs and three DKIM records recorded from authenticated Hostinger UI; separate export-file download was declined and remains manual |
-| Full patched Linux CI | PASS | Commit `9e64245`, Actions run `40368544335`: clean install, lint, types, unit suite, dependency audit, browser suite, Webpack standalone build and root-entry production smoke all pass. Prior lockfile and editable-copy smoke failures were corrected; this does not prove the WhoGoHost runner |
+| Full patched Linux CI | PASS | Final application-code commit `091c49a`, Actions run `40372928179`: clean install, lint, types, 163 unit tests, zero production dependency vulnerabilities, 29 browser tests, Webpack standalone build and root-entry smoke all pass. Earlier optional-lockfile, editable-copy smoke and test-only environment typing failures were corrected |
 | Preview-only DNS | PASS | Owner explicitly approved preview A → 102.68.97.69, TTL 300. Saved record and public resolution verified; main domain, www, nameservers and mail records preserved |
 | Actual WhoGoHost Linux build | PASS | Private checkout at `9e64245`; locked installation and Webpack standalone build completed within the purchased account's limits, public-only build environment |
 | Trusted preview TLS / public routes | PASS | Automatically renewed valid certificate for preview; 72/72 preview requests pass, including catalogue, product/category pages and portal sign-in routes. A provider placeholder masking `/` was moved into a private backup |
-| Private credential placement | IN PROGRESS | Owner approved private runtime keys. Manager values were observed in document-root `.htaccess`, so privileged keys are being stored in a 700/600 private directory/file and loaded only at managed startup; no key was entered into the panel environment table |
+| Private credential placement | BLOCKED | Owner approved private runtime keys, but the browser upload security gate declined transfer. No key was uploaded or entered into the panel table. Owner-only destination exists with mode 700; manual upload, mode 600/hash verification and path configuration remain |
+| Managed restart and anonymous security | PASS | New-host app survived manager restart; 36/36 targeted checks pass for public rendering/health, CSP/TLS headers, private file denials, protected APIs, portal sign-in guards, anonymous checkout denial and client assets without the supplied server keys. This is not authenticated/financial acceptance |
+| Actual browser bag and sign-in | PASS | Product added locally, quantity changed 1→2, subtotal recalculated, refresh retained two items, checkout opened same-origin `/login?next=/checkout` with saved-bag message. Temporary browser bag then cleared. Staff opened same-origin sign-in. No order/reservation or account created |
+| Preview startup-entry rollback rehearsal | PASS with limited scope | Previous `9e64245` startup entry restored temporarily through private backup, managed restart returned health 200, current `5de82f6` entry then restored byte-for-byte with clean source diff, restarted, health and homepage 200. No full release-bundle or database rollback claimed |
 
-## WhoGoHost staging matrix — all currently BLOCKED
+## Remaining WhoGoHost acceptance cases
 
 Create a row per case with release hash, target origin, time, evidence and corrective action. Do not mark these PASS using the old site's result:
 
@@ -53,8 +56,8 @@ Live Supabase behind a staging host is still production data. Financial, invitat
 
 ## Go/no-go checklist
 
-- [ ] Actual WhoGoHost plan supports the project's Node 24 runtime and accepted standalone startup method.
-- [ ] Maintained patched release builds on matching Linux, audit is clean, tests pass, artifact is secret-free.
+- [x] Actual WhoGoHost plan supports the project's Node 24 runtime and accepted standalone startup method for the public preview.
+- [x] Maintained patched release builds on matching Linux, production audit is clean and 163 unit/29 browser tests pass. Public client assets pass the supplied-key scan; repeat checks after private runtime configuration.
 - [ ] Private app directories, managed lifecycle, correct origin/port, limits, trusted TLS and restart verified.
 - [ ] Complete old server/config/zone backups and source recovery rehearsal recorded.
 - [ ] Every applicable staging case above is PASS or an explicitly accepted, documented limitation; no FAIL or unreviewed BLOCKED item is hidden.

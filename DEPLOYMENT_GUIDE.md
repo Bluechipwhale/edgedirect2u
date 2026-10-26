@@ -10,7 +10,7 @@ The release root contains generated `server.js`, its traced dependencies, `.next
 
 ## Build on Linux
 
-Use the account's verified Node 24 environment activation command; it is provider-specific and has not been obtained. Build in a new private source directory, never over the current release. The following commands are exact repository commands **after** navigating to that clean checkout and privately setting the public build variables described in `ENVIRONMENT_VARIABLES.md`:
+Use the account's verified Node 24 activation command recorded below. Build in a new private source directory, never over a serving release. The following commands are exact repository commands **after** navigating to that clean checkout and privately setting the public build variables described in `ENVIRONMENT_VARIABLES.md`:
 
 ```bash
 node --version
@@ -76,6 +76,10 @@ Inspection showed CloudLinux serializes panel environment settings into the docu
 Use `/home/edgedire/apps/edgedirect2u-preview/private/` with mode 700 and an owner-only `runtime.env` with mode 600, outside all document roots and the Git checkout. Transfer it through the authenticated File Manager into that exact directory. Configure only `RUNTIME_ENV_FILE=/home/edgedire/apps/edgedirect2u-preview/private/runtime.env` in the manager. The repository's root startup loader uses Node's built-in `process.loadEnvFile` only when this absolute path is explicitly configured; missing/unreadable files stop startup with a sanitized error. Existing environment settings take precedence. Never put this private file into build inputs, logs, screenshots, Git or public archives.
 
 Privately compare the uploaded file's SHA-256 with the local prepared file, verify file/directory modes, run runtime preflight without printing values, then perform a managed restart and read-only checks. The optional file loader leaves Hostinger/Vercel startup paths unchanged.
+
+**Manual step required:** the browser security gate declined the private file upload. No private credentials were transferred. In the open File Manager folder `/apps/edgedirect2u-preview/private`, the owner can manually upload `C:\Users\HP\Documents\ChatGPT\edged2uu\.data\migration-20261026\private\whogohost-runtime.env`. Keep it private and do not upload it into any `public_html`. Leave the page open afterward so permissions/hash and the final runtime path can be verified. Do not bypass the declined upload through an alternate browser, encoded terminal payload or other indirect transfer. Until that step is complete, the preview remains public-only and its payment checkout stays disabled.
+
+The preview also has an `X-Robots-Tag: noindex, nofollow, noarchive` response header, added outside the manager's generated `.htaccess` blocks after saving a private backup. This prevents staging indexing; do not copy that staging-only rule to the final production site.
 
 ## Staging, TLS and acceptance
 

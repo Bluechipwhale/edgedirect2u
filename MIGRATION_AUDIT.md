@@ -1,6 +1,6 @@
 # Edgedirect2u migration audit
 
-Research date: **26 October 2026 (Africa/Lagos)**. Status: **preparation only; NO-GO for DNS cutover** until account compatibility and staging acceptance are verified.
+Research date: **26 October 2026 (Africa/Lagos)**. Status: **WhoGoHost public preview deployed; NO-GO for production DNS cutover** until private runtime and authenticated acceptance are complete.
 
 ## Source and domains
 
@@ -8,14 +8,16 @@ Research date: **26 October 2026 (Africa/Lagos)**. Status: **preparation only; N
 - Migration branch: `codex/whogohost-cpanel-migration`, created from that commit. Production branches are unchanged.
 - Current application: `https://edgedirect2u.com` on Hostinger; backup: `https://edgedirect2u.vercel.app`.
 - **Owner clarification on 26 October: keep `edgedirect2u.com` as the final domain.** The pasted prompt named `.com.ng`, but that distinct legacy domain is outside this migration and remains untouched.
-- The authenticated new service is **DA Web Hosting — Deluxe 30GB DA Web Hosting**, Active, attached to `edgedirect2u.com`. Its service page offers **Login to DirectAdmin**, not cPanel. Node availability must be verified inside that actual panel; cPanel-specific menus cannot be assumed.
+- The authenticated new service is **DA Web Hosting — Deluxe 30GB DA Web Hosting**, Active, attached to `edgedirect2u.com`. DirectAdmin's CloudLinux manager supplies verified Node 24.21.0, npm 11.19.0 and Git 2.43.7 on Linux x86_64/glibc 2.28. The preview builds and runs there; do not assume cPanel menus.
+- The owner approved only `preview.edgedirect2u.com` A → `102.68.97.69`, TTL 300. Trusted HTTPS, private source checkout, public catalogue and managed restart are verified. Main-domain, www, mail and nameserver records are preserved.
+- Additional owner instruction: **leave edgedirect2u.vercel.app untouched as the backup**. No migration merge to `main`, Vercel project/configuration/environment update or production redeploy is authorized.
 - Hostinger deployment was freshly rechecked in hPanel: Completed/Current, 22 October 2026, 21:33:10. Its eight current environment values were exported privately from the visible table and then hidden again. Last recorded Vercel deployment: `dpl_FzN6K1BgpcoGh5SwRoctqbU3yf8P`, Ready. Today's GitHub source hash is verified; the current server filesystem/build hash still requires a remote file backup.
 
 ## Detected architecture
 
 | Layer | Verified implementation |
 |---|---|
-| Web/server | Next.js **16.4.0**, App Router, React/React DOM **19.3.0**, TypeScript 5; server components, `src/proxy.ts`, authenticated Route Handlers |
+| Web/server | Original Next.js **16.4.0**, migration candidate **16.4.3**; App Router, React/React DOM **19.3.0**, TypeScript 5; server components, `src/proxy.ts`, authenticated Route Handlers |
 | Runtime | `package.json` requires Node **24.x**; local verification uses 24.11.0. Existing commands use `--use-system-ca`; use a maintained 24.x release supporting this flag, at least 24.6 |
 | Build | npm, committed lockfile v3, Tailwind 4. Hostinger uses Webpack because of shared-host worker constraints. `experimental.cpus=2` limits workers, not total required memory |
 | Output | `output: 'standalone'`; generated `.next/standalone/server.js`; existing asset packager copies `public` and `.next/static` |
@@ -30,7 +32,7 @@ This is neither PHP nor a static frontend. Static export would remove required s
 
 ## Hosting-sensitive behavior
 
-1. A persistent managed Node process must execute generated `server.js` behind the provider's HTTPS proxy. Passenger/Application Manager availability, startup filename support and compatibility are not yet verified. A custom Next server must not be mixed with standalone output.
+1. The verified CloudLinux-managed Node process starts `source/server.js`, which delegates to generated standalone output. Trusted HTTPS, core proxy/security headers and managed restart work. Authenticated sessions, private runtime credentials and sustained/idle behavior need their own acceptance. Do not introduce a custom Next server.
 2. `NEXT_PUBLIC_SITE_URL` controls same-origin mutation checks, payment return URLs, Auth verification redirects, metadata, robots and sitemap. Build and runtime values must agree with the actual staged origin. Runtime changes alone do not replace public values already built into assets.
 3. `config/hostinger-public.json` and `build:hostinger`/`build:vercel` intentionally default to `.com`. Use the new, explicit `build:whogohost` path; do not change existing production build defaults.
 4. Preserve the existing www.edgedirect2u.com to apex redirect and certificate coverage on the new proxy. The owner retained .com; .com.ng routing is excluded.
@@ -50,8 +52,8 @@ SMTP is configured in Supabase, using the existing `info@edgedirect2u.com` mailb
 
 Private evidence is ignored by Git under `.data/migration-20261026/`:
 
-- `backup-manifest.json`: verified all-ref Git bundle, source ZIP, private runtime-setting copies, previous deployment records and a consistent **development-only** SQLite backup; seven files, about 3.5 MB. The Git bundle can be restored in a separate directory.
-- `dns-before.json`: read-only public DNS snapshot for both domains and their observed MX targets. This is not a complete zone export; DKIM selectors, unknown subdomains, configured TTLs and verification records require account access.
+- `backup-manifest.json`: verified all-ref Git bundle, source ZIP, private runtime-setting copies, previous deployment records and a consistent **development-only** SQLite backup. The Git bundle can be restored in a separate directory.
+- `dns-before.json`: read-only public DNS snapshot; `hostinger-dns-zone-before.json` adds the 12 authenticated original records, including website ALIAS/CNAME, DKIM and configured TTLs. A separate provider export download was declined and remains manual; DNSSEC/DS review is pending.
 - `baseline-http.json`: 144 existing-host route checks; 143 initial passes and one transport failure, followed by successful targeted HTTP 200 checks on both hosts. See the test plan for scope and limits.
 
 The live Hostinger environment export is additionally saved as `private/hostinger-live-runtime.json`; do not publish it. Remote Hostinger filesystem backup and Supabase backup/PITR availability still need provider verification. Local backups are not substitutes for those provider backups. The legacy `.com.ng` site is excluded and must not be changed. No database changes are proposed; no schema export, restore, credential rotation or storage mutation was performed.
@@ -68,14 +70,15 @@ The 26 October production-dependency audit reports critical advisories for the o
 | `scripts/hosting-preflight.cjs` | Reject incompatible Node, wrong/local public origin, public privileged keys and private dotenv build files; no provider writes/network calls |
 | `tests/hosting-preflight.test.ts` | Validate unsafe deployment inputs are rejected without logging credential values |
 | `server.js`, `scripts/smoke-production.cjs`, `.github/workflows/verify.yml`, `eslint.config.mjs` | Standard managed-host startup loader plus a Linux production smoke test; existing default startup preserved |
+| `tests/managed-startup.test.ts` | Four startup safety cases: optional private file, correct absolute file loading, relative-path rejection and sanitized unreadable-file errors |
 | The seven root migration Markdown files | Audit, account checklist, conditional deployment, variable inventory, mail-safe DNS plan, rollback and explicit acceptance record |
 
-Application UI, route behavior, existing migrations, production environment values, payment dashboard, native binaries, mail configuration and DNS are unchanged.
+Application UI, route behavior, existing migrations, production environment values, payment dashboard, native binaries and mail configuration are unchanged. The only approved DNS addition is the isolated preview A record. Existing website records and Vercel backup remain intact.
 
-Manual decisions still required: DirectAdmin access and provider-specific runtime/destination facts; approval of a staging DNS record if needed; dedicated test credentials/fixtures and owner-controlled sign-in/MFA/email checks; review of any production Auth/domain/native identity changes; explicit production DNS cutover approval. Creating a paid plan, changing nameservers or cancelling hosting is not authorized automatically. Do not ask for production cutover approval until the exact target and completed staging evidence are available.
+The owner approved private runtime credentials, but the browser's file-upload security gate declined the transfer. The prepared local private file has not been uploaded; do not work around this denial through another browser, terminal payload or indirect transfer. The owner must upload it manually into the verified owner-only destination. Then verify its hash/mode, configure only its path and perform authenticated, email and isolated payment acceptance. Dedicated test fixtures/credentials, complete provider backups, DNSSEC review and explicit production cutover approval remain outstanding. Creating a paid plan, changing nameservers or cancelling hosting is not authorized automatically.
 
-Complexity is **moderate if a compatible managed Node 24 runner is available**, and blocked on the current plan otherwise. The same production domain avoids an unnecessary identity/native-app migration. A split static frontend/API deployment would require changes to this server-rendered same-origin application; it is not a drop-in alternative.
+Complexity is **moderate**. The purchased plan demonstrably builds and runs the existing public app on Node 24. The same production domain avoids an unnecessary identity/native-app migration. A split static frontend/API deployment would require changes to this server-rendered same-origin application; it is not a drop-in alternative.
 
-Complete [WHOGOHOST_COMPATIBILITY.md](WHOGOHOST_COMPATIBILITY.md) before choosing a startup mechanism. If the plan lacks suitable Node hosting, retain Hostinger/Vercel + Supabase or obtain a compatible plan with explicit approval. No purchase or live rewrite is authorized by this report.
+Use the confirmed setup in [WHOGOHOST_COMPATIBILITY.md](WHOGOHOST_COMPATIBILITY.md) and complete its remaining authenticated/private-runtime acceptance. Keep the live Hostinger app and untouched Vercel backup available. No purchase or live rewrite is authorized by this report.
 
 Sources checked: [WhoGoHost Node hosting](https://www.whogohost.com/node-js-hosting) advertises Node hosting but lists legacy versions; it does not verify this account. [cPanel Application Manager](https://docs.cpanel.net/cpanel/software/application-manager/) requires host-enabled features. [Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting) and installed Next.js 16.4.0 docs describe the Node/reverse-proxy deployment model.

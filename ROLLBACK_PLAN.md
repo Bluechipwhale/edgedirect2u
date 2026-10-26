@@ -1,13 +1,13 @@
 # Reversible deployment and rollback
 
-Date: 26 October 2026. Production cutover has **not occurred**. Hostinger, Vercel, Supabase, payment settings and mail DNS remain unchanged. A failed staging deployment needs no production DNS rollback.
+Date: 26 October 2026. Production cutover has **not occurred**. Hostinger's live app, Vercel backup, Supabase, payment settings and mail DNS remain unchanged. Only the owner-approved preview A record was added. A failed staging deployment needs no production DNS rollback. The owner explicitly instructed that edgedirect2u.vercel.app remain untouched.
 
 ## Prepared recovery material
 
 Private, ignored location: `.data/migration-20261026/private/`. Do not upload this directory to a public repository or document root; it contains configuration credentials and a development SQLite snapshot.
 
 - Verified all-ref Git bundle and source archive at production-source commit `84f57046de04cc28eb7ad0c4346234830e7a3335`.
-- Saved existing local private runtime configuration and previous deployment records; SHA-256 manifest in the parent directory. Remote provider settings may differ and must still be exported separately.
+- Saved existing local private runtime configuration and previous deployment records; SHA-256 manifest in the parent directory. The eight actual Hostinger runtime values were additionally exported privately from the authenticated panel; remote filesystem restoration remains untested.
 - Consistent SQLite backup through Node's database backup API. It is a development fixture and must never replace Supabase.
 - Public DNS observations for both domains, with complete zone/provider backup still pending.
 
@@ -32,5 +32,7 @@ Only restore into a **new private directory**; never reset or overwrite this wor
 7. Record cause, scope, timeline, corrective action and conditions for another attempt. Resume cutover work only after the owner reviews the incident and new staging evidence.
 
 ## Untested dependencies
+
+The preview startup entry was rehearsed separately: restore the previously working `9e64245` entry, restart through the manager, verify health 200, restore the current `5de82f6` entry byte-for-byte, restart, then verify health and homepage 200. Private evidence is `preview-startup-rollback.json`. This proves the entry-file/runner recovery path only; no full runtime-bundle, authenticated-session, financial or database rollback is claimed.
 
 Remote Hostinger file restoration and target-provider environment restoration, actual DNS changes, new-runner release switching, mailbox delivery and end-to-end checkout rollback are **BLOCKED** until account access and an approved rehearsal environment exist. Supabase backup/PITR availability has not been independently confirmed this session; no database migration/restore is proposed. Do not label the full production rollback tested merely because the Git bundle verifies.
