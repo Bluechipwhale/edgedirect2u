@@ -20,13 +20,16 @@
     "check:production": "node --use-system-ca scripts/smoke-production.cjs",
     "ops:status": "node scripts/operations.cjs",
     "ops:schedule": "node scripts/operations.cjs --schedule",
-    "build:hostinger": "node scripts/prepare-hostinger.cjs && npm run build -- --webpack && node scripts/package-standalone.cjs"
+    "build:hostinger": "node scripts/prepare-hostinger.cjs && npm run build -- --webpack && node scripts/package-standalone.cjs",
+    "check:hosting": "node scripts/hosting-preflight.cjs",
+    "start:whogohost": "node --use-system-ca server.js",
+    "build:whogohost": "node scripts/hosting-preflight.cjs build && npm run build -- --webpack && node scripts/package-standalone.cjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.117.3",
     "lucide-react": "^1.55.0",
-    "next": "16.4.0",
+    "next": "16.4.3",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"

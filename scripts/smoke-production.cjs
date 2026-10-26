@@ -12,7 +12,8 @@ async function availablePort(){
 async function main(){
   const port=await availablePort();
   const origin=`http://127.0.0.1:${port}`;
-  const child=spawn(process.execPath,['--use-system-ca','.next/standalone/server.js'],{env:{...process.env,NODE_ENV:'production',HOSTNAME:'127.0.0.1',PORT:String(port)},stdio:['ignore','pipe','pipe'],windowsHide:true});
+  const entry=process.argv.includes('--root-entry')?'server.js':'.next/standalone/server.js';
+  const child=spawn(process.execPath,['--use-system-ca',entry],{env:{...process.env,NODE_ENV:'production',HOSTNAME:'127.0.0.1',PORT:String(port)},stdio:['ignore','pipe','pipe'],windowsHide:true});
   let logs='';child.stdout.on('data',c=>logs+=c);child.stderr.on('data',c=>logs+=c);
   try{
     let ready=false;
