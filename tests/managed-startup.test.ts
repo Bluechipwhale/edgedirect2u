@@ -15,7 +15,7 @@ function fixture() {
   mkdirSync(join(dir, '.next', 'standalone'), { recursive: true });
   writeFileSync(join(dir, '.next', 'standalone', 'server.js'), "console.log(process.env.RUNTIME_TEST_SECRET ? 'configured' : 'ready');");
   const env = { ...process.env }; delete env.RUNTIME_ENV_FILE; delete env.RUNTIME_TEST_SECRET;
-  return { dir, env, run: (extra: NodeJS.ProcessEnv = {}) => spawnSync(process.execPath, ['server.js'], { cwd: dir, env: { ...env, ...extra }, encoding: 'utf8', windowsHide: true }) };
+  return { dir, env, run: (extra: Partial<NodeJS.ProcessEnv> = {}) => spawnSync(process.execPath, ['server.js'], { cwd: dir, env: { ...env, ...extra }, encoding: 'utf8', windowsHide: true }) };
 }
 test('managed entry starts without a private configuration file', () => {
   const f = fixture(), result = f.run(); expect(result.status).toBe(0); expect(result.stdout.trim()).toBe('ready');
