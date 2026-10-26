@@ -1,8 +1,8 @@
 # DNS cutover plan — review required
 
-Date: 26 October 2026. **Production website and mail DNS are unchanged. The owner approved only the staging A record: preview → 102.68.97.69, TTL 300. That record is saved in Hostinger and resolves publicly. No production cutover is approved.**
+Date: 26 October 2026. **Production website cutover remains unapproved.** The preview A record is saved and resolves publicly. A later owner request to repair staff-mail delivery authorized an email-only routing change to WhoGoHost, now saved and DNS-verified. See [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md) for the current mail records and receipt test status. Website records, nameservers and the Vercel backup are unchanged.
 
-## Observed current records
+## Original records before email routing repair
 
 These are public recursive observations, not a complete authoritative zone export. Private evidence: `.data/migration-20261026/dns-before.json` and `dns-address-ttl.json`. Obtain both complete zones, configured TTLs, all subdomains, verification records, mail dependencies, DKIM selectors, CAA and DNSSEC/DS state before approval.
 
@@ -11,8 +11,8 @@ These are public recursive observations, not a complete authoritative zone expor
 | `edgedirect2u.com` | NS | `lunar.dns-parking.com`, `solar.dns-parking.com` | Preserve |
 | `.com` apex | A/AAAA | Hostinger CDN returns changing address sets; observed address TTL 60 seconds | Do not replace dynamic CDN configuration with a sampled IP |
 | `www.edgedirect2u.com` | CNAME | `www.edgedirect2u.com.cdn.hstgr.net` | Preserve |
-| `.com` | MX | priority 5 `mx1.hostinger.com`; priority 10 `mx2.hostinger.com` | Preserve email service and routing |
-| `.com` | TXT SPF | `v=spf1 include:_spf.mail.hostinger.com ~all` | Preserve |
+| `.com` | MX | priority 5 `mx1.hostinger.com`; priority 10 `mx2.hostinger.com` | Historical values; superseded by the separate email repair |
+| `.com` | TXT SPF | `v=spf1 include:_spf.mail.hostinger.com ~all` | Historical value; current policy also authorizes WhoGoHost |
 | `_dmarc.edgedirect2u.com` | TXT | `v=DMARC1; p=none` | Preserve |
 | `edgedirect2u.com.ng` | NS | `ns1.sv1stlincoln.com`, `ns2.sv1stlincoln.com` | Preserve; these identify the currently delegated DNS, not the new purchased plan's capabilities |
 | `.com.ng` apex | A | `199.241.136.37`; observed TTL 3600 seconds | Existing website rollback reference; configured zone TTL must be confirmed |
@@ -25,9 +25,9 @@ These are public recursive observations, not a complete authoritative zone expor
 
 DKIM and unknown TXT/verification subdomains cannot be enumerated reliably by guessing selectors. Export from the authoritative DNS account. Changing only A/AAAA records can still affect mail when MX targets the apex, SPF uses `a`, or clients use the apex for SMTP/IMAP; audit those dependencies first. Existing `.com.ng` MX uses a separate `mail` name whose address can be preserved.
 
-## Authenticated Hostinger zone review
+## Original authenticated Hostinger zone review
 
-The signed-in zone editor was inspected on 26 October. Its 12 visible records are recorded in `.data/migration-20261026/hostinger-dns-zone-before.json`, captured before the file-download permission refusal. The exact current website mapping is **ALIAS @ to edgedirect2u.com.cdn.hstgr.net, TTL 300**, and **CNAME www to www.edgedirect2u.com.cdn.hstgr.net, TTL 300**. Preserve these exact targets for rollback rather than sampled CDN IPs. The three verified DKIM CNAMEs are hostingermail-a._domainkey, hostingermail-b._domainkey and hostingermail-c._domainkey, pointing to their corresponding hostingermail-a/b/c.dkim.mail.hostinger.com targets, each TTL 300. MX priorities remain 5/10 with configured TTL 14400; SPF and DMARC TTLs are 3600. The provider export-file download was declined by the browser permission gate and was stopped; the owner must obtain that file manually. DNSSEC/DS status still needs confirmation. No records were added or edited.
+The signed-in zone editor was inspected on 26 October. Its original 12 visible records are recorded in `.data/migration-20261026/hostinger-dns-zone-before.json`, captured before the file-download permission refusal. The exact current website mapping is **ALIAS @ to edgedirect2u.com.cdn.hstgr.net, TTL 300**, and **CNAME www to www.edgedirect2u.com.cdn.hstgr.net, TTL 300**. Preserve these exact targets for rollback rather than sampled CDN IPs. The three verified DKIM CNAMEs are hostingermail-a._domainkey, hostingermail-b._domainkey and hostingermail-c._domainkey, pointing to their corresponding hostingermail-a/b/c.dkim.mail.hostinger.com targets, each TTL 300. Original MX priorities were 5/10 with TTL 14400; original SPF and DMARC TTLs were 3600. Those MX/SPF values are historical, superseded by EMAIL_ROUTING_UPDATE.md. The provider export-file download was declined by the browser permission gate and was stopped; the owner must obtain that file manually. DNSSEC/DS status still needs confirmation.
 
 ## Approved staging and proposed production changes
 
@@ -48,7 +48,7 @@ Do not use any observed old address as the new WhoGoHost IP. Do not assume a nam
 2. Verify staging on Node 24, trusted TLS, restart, Auth/email, roles, stock, test checkout/refund, raw webhook handling, uploads and field clock-in. Resolve the security patch and all applicable failed/blocked tests. Shared Paystack routing must have an approved solution before claims of full payment readiness.
 3. The owner confirmed keeping `.com`. This is a same-domain hosting move: preserve its Auth identity, native trust and browser storage scope. The legacy `.com.ng` domain is outside this cutover. A separate staging hostname still needs its own approved callbacks and cookie tests.
 4. If practical, ask the DNS owner to lower only the website-record TTL to 300 seconds in advance, and wait at least the previous configured TTL. This is a proposed manual change, not performed. Existing 60-second CDN answers are not proof of the underlying configured TTL.
-5. Present the completed old/new record table, production-origin build evidence, authentication changes and rollback trigger to the owner for explicit approval. DNS remains unchanged until approved.
+5. Present the completed old/new website record table, production-origin build evidence, authentication changes and rollback trigger to the owner for explicit approval. Website DNS remains unchanged until approved. Preserve the separately repaired WhoGoHost mail routing.
 6. After approval, the owner applies only reviewed website changes. Keep mail DNS, Hostinger installation, existing legacy site and Vercel available. Monitor IPv4/IPv6 and several resolvers; test TLS and the actual browser, not just DNS lookup results.
 7. Record order/payment IDs privately during observation. Never merge or restore an old Supabase snapshot over new transactions. Raise TTLs after stability is accepted.
 

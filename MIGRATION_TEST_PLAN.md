@@ -35,6 +35,10 @@ Date: 26 October 2026. Allowed outcomes: **PASS**, **FAIL**, **BLOCKED**, **NOT 
 
 ## Remaining WhoGoHost acceptance cases
 
+### Separate email routing repair
+
+On 26 October 2026 the owner reported a Hostinger `550 5.1.1` bounce for a staff mailbox already created on WhoGoHost and requested direct delivery. The email-only A/MX/SPF/DKIM repair is saved and verified at the authoritative nameserver, Google DNS and Cloudflare DNS. WhoGoHost local delivery is enabled; SMTP 465 and IMAP 993 TLS certificates verify. Approved Olawale-to-info delivery passed with actual Inbox receipt, and Olawale-to-owner-Gmail delivery passed with relay logs plus the owner's confirmation of receipt. The owner replied from Gmail; actual incoming receipt remains pending as of 23:57 Lagos. Do not mark the incoming direction PASS based only on DNS or the owner's send action. See [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md). Website cutover remains blocked independently.
+
 Create a row per case with release hash, target origin, time, evidence and corrective action. Do not mark these PASS using the old site's result:
 
 | Area | Cases and required evidence |

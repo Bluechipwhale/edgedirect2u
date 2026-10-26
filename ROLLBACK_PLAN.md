@@ -1,6 +1,6 @@
 # Reversible deployment and rollback
 
-Date: 26 October 2026. Production cutover has **not occurred**. Hostinger's live app, Vercel backup, Supabase, payment settings and mail DNS remain unchanged. Only the owner-approved preview A record was added. A failed staging deployment needs no production DNS rollback. The owner explicitly instructed that edgedirect2u.vercel.app remain untouched.
+Date: 26 October 2026. Production **website** cutover has not occurred. Hostinger's live app, Vercel backup and payment settings remain unchanged. The preview A record was added, and a later owner-requested email repair separately routed incoming mail to WhoGoHost. See [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md). Preserve that current mail routing during any website rollback; restoring historical Hostinger MX would revive recipient-not-found failures for new staff mailboxes. A failed staging deployment needs no production website DNS rollback. The owner explicitly instructed that edgedirect2u.vercel.app remain untouched.
 
 ## Prepared recovery material
 

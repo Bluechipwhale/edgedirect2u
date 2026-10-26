@@ -1,6 +1,6 @@
 # Edgedirect2u migration audit
 
-Research date: **26 October 2026 (Africa/Lagos)**. Status: **WhoGoHost public preview deployed; NO-GO for production DNS cutover** until private runtime and authenticated acceptance are complete.
+Research date: **26 October 2026 (Africa/Lagos)**. Status: **WhoGoHost public preview deployed; NO-GO for production website DNS cutover** until private runtime and authenticated acceptance are complete. A later owner request separately authorized incoming-mail routing repair; its saved DNS changes and pending receipt test are documented in [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md).
 
 ## Source and domains
 
@@ -9,7 +9,7 @@ Research date: **26 October 2026 (Africa/Lagos)**. Status: **WhoGoHost public pr
 - Current application: `https://edgedirect2u.com` on Hostinger; backup: `https://edgedirect2u.vercel.app`.
 - **Owner clarification on 26 October: keep `edgedirect2u.com` as the final domain.** The pasted prompt named `.com.ng`, but that distinct legacy domain is outside this migration and remains untouched.
 - The authenticated new service is **DA Web Hosting — Deluxe 30GB DA Web Hosting**, Active, attached to `edgedirect2u.com`. DirectAdmin's CloudLinux manager supplies verified Node 24.21.0, npm 11.19.0 and Git 2.43.7 on Linux x86_64/glibc 2.28. The preview builds and runs there; do not assume cPanel menus.
-- The owner approved only `preview.edgedirect2u.com` A → `102.68.97.69`, TTL 300. Trusted HTTPS, private source checkout, public catalogue and managed restart are verified. Main-domain, www, mail and nameserver records are preserved.
+- The owner initially approved `preview.edgedirect2u.com` A → `102.68.97.69`, TTL 300. Trusted HTTPS, private source checkout, public catalogue and managed restart are verified. The later email repair changed only the mail A/MX/SPF/DKIM records described in EMAIL_ROUTING_UPDATE.md. Main website, www and nameserver records are preserved.
 - Additional owner instruction: **leave edgedirect2u.vercel.app untouched as the backup**. No migration merge to `main`, Vercel project/configuration/environment update or production redeploy is authorized.
 - Hostinger deployment was freshly rechecked in hPanel: Completed/Current, 22 October 2026, 21:33:10. Its eight current environment values were exported privately from the visible table and then hidden again. Last recorded Vercel deployment: `dpl_FzN6K1BgpcoGh5SwRoctqbU3yf8P`, Ready. Today's GitHub source hash is verified; the current server filesystem/build hash still requires a remote file backup.
 
@@ -46,7 +46,7 @@ This is neither PHP nor a static frontend. Static export would remove required s
 
 The shared Paystack account's last verified webhook destination is the Nexzek WooCommerce endpoint documented in `docs/PAYSTACK.md`. Preserve it. This application's endpoint is `/api/payments/webhook`; the return/verification flow is separate. Shared automatic event routing and complete financial acceptance remain pre-existing commissioning work. Do not treat a signed no-op test as a purchase/refund test. Stage with a test key and isolated test data for financial mutations; never switch the shared live dashboard to test or replace its webhook as part of this migration.
 
-SMTP is configured in Supabase, using the existing `info@edgedirect2u.com` mailbox. SMTP credentials do not need to be added to this Next.js runtime. Preserve Hostinger email hosting and all MX/SPF/DKIM/DMARC records. Current `.com.ng` MX targets its own `mail` hostname; its address and SPF also need preservation.
+SMTP is configured in Supabase, using the existing Hostinger `info@edgedirect2u.com` sender. SMTP credentials do not need to be added to this Next.js runtime and were not changed by the email repair. Keep Hostinger's sender authorization and original mailbox available while incoming mail moves to the separately created WhoGoHost mailboxes. Preserve the current combined SPF, both providers' DKIM selectors and DMARC. Current `.com.ng` MX targets its own `mail` hostname; its address and SPF also need preservation.
 
 ## Protection and evidence
 
@@ -73,7 +73,7 @@ The 26 October production-dependency audit reports critical advisories for the o
 | `tests/managed-startup.test.ts` | Four startup safety cases: optional private file, correct absolute file loading, relative-path rejection and sanitized unreadable-file errors |
 | The seven root migration Markdown files | Audit, account checklist, conditional deployment, variable inventory, mail-safe DNS plan, rollback and explicit acceptance record |
 
-Application UI, route behavior, existing migrations, production environment values, payment dashboard, native binaries and mail configuration are unchanged. The only approved DNS addition is the isolated preview A record. Existing website records and Vercel backup remain intact.
+Application UI, route behavior, existing migrations, production environment values, payment dashboard and native binaries are unchanged. The preview A record and later owner-requested email-only DNS repair are recorded separately. Existing website records and the Vercel backup remain intact.
 
 The owner approved private runtime credentials, but the browser's file-upload security gate declined the transfer. The prepared local private file has not been uploaded; do not work around this denial through another browser, terminal payload or indirect transfer. The owner must upload it manually into the verified owner-only destination. Then verify its hash/mode, configure only its path and perform authenticated, email and isolated payment acceptance. Dedicated test fixtures/credentials, complete provider backups, DNSSEC review and explicit production cutover approval remain outstanding. Creating a paid plan, changing nameservers or cancelling hosting is not authorized automatically.
 

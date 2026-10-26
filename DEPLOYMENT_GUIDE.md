@@ -1,6 +1,6 @@
 # WhoGoHost deployment guide
 
-**Staging deployment in progress; production cutover is not approved.** The purchased service is Deluxe 30GB DA Web Hosting (DirectAdmin), and the owner confirmed keeping edgedirect2u.com. The legacy .com.ng domain remains untouched. Node 24, a private application, Linux build and trusted preview HTTPS now work on the actual account. Continue the acceptance record in [MIGRATION_TEST_PLAN.md](MIGRATION_TEST_PLAN.md) before any production move. The owner additionally instructed that edgedirect2u.vercel.app must remain untouched as a backup; do not change its project, deployment, environment or domain.
+**Staging deployment in progress; production website cutover is not approved.** Incoming mail was separately routed to WhoGoHost at the owner's request to fix staff-mail bounces; see [EMAIL_ROUTING_UPDATE.md](EMAIL_ROUTING_UPDATE.md). The purchased service is Deluxe 30GB DA Web Hosting (DirectAdmin), and the owner confirmed keeping edgedirect2u.com. The legacy .com.ng domain remains untouched. Node 24, a private application, Linux build and trusted preview HTTPS now work on the actual account. Continue the acceptance record in [MIGRATION_TEST_PLAN.md](MIGRATION_TEST_PLAN.md) before any production website move. The owner additionally instructed that edgedirect2u.vercel.app must remain untouched as a backup; do not change its project, deployment, environment or domain.
 
 ## Recommended layout
 
@@ -53,7 +53,7 @@ The verified alternative on this account is a private public-repository Git chec
 
 ## Actual preview deployment record
 
-- Preview: `https://preview.edgedirect2u.com`, owner-approved A record `102.68.97.69`, TTL 300. The main domain and mail DNS remain on Hostinger.
+- Preview: `https://preview.edgedirect2u.com`, owner-approved A record `102.68.97.69`, TTL 300. The main website remains on Hostinger; authoritative DNS remains there too. Incoming mail now routes to WhoGoHost under the separate email repair.
 - Managed application root: `/home/edgedire/apps/edgedirect2u-preview`; mode Production; Node 24.21.0. npm 11.19.0 and Git 2.43.7 verified in the activated terminal.
 - Source checkout: `/home/edgedire/apps/edgedirect2u-preview/source`; migration branch only. Initial verified build commit `9e64245`.
 - Panel startup filename: `source/server.js`, delegating to the checkout's generated standalone server. Leave the provider-assigned Passenger transport unchanged; no manual PORT or detached process was added.
