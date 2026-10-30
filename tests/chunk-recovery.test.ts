@@ -1,0 +1,3 @@
+import {it,expect} from 'vitest';
+import {isChunkFailure,shouldRecoverChunk} from '@/lib/chunk-recovery';
+it('recovers stale deployment chunks once without retrying mutations or looping on errors',()=>{const error='ChunkLoadError: Loading chunk 7581 failed.';expect(isChunkFailure(error)).toBe(true);expect(shouldRecoverChunk(error,0,1_000_000)).toBe(true);expect(shouldRecoverChunk(error,990_000,1_000_000)).toBe(false);expect(shouldRecoverChunk('Forbidden',0,1_000_000)).toBe(false);expect(shouldRecoverChunk(error,NaN,1_000_000)).toBe(false);expect(isChunkFailure('Failed to fetch dynamically imported module')).toBe(true);});

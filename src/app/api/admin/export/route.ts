@@ -3,10 +3,14 @@ import {requireRole,localMode,supabase,catalogue,records,adminProductCatalogue,o
 import {resourceFields} from '@/lib/resources';
 import {csv} from '@/lib/business';
 import {failure} from '@/lib/http';
+import {exportContent} from '@/lib/content-export';
+import {GET as exportBrands} from '@/app/admin/brands/export/route';
 export async function GET(req:Request){try{
  const a=await requireRole(['admin']);const params=new URL(req.url).searchParams;
  const input=z.object({kind:z.string().max(60),q:z.string().max(120).default(''),state:z.enum(['all','active','draft','archived']).default('all'),owner:z.string().max(100).default('')}).parse(Object.fromEntries(params));
  if(!Object.hasOwn(resourceFields,input.kind)&&!['audit','stock_movements','merchant_ledger','orders','deliveries','refunds','profiles'].includes(input.kind))throw new Error('Unsupported export');
+ if(input.kind==='brands')return exportBrands(req);
+ if(input.kind==='gallery'||input.kind==='pages')return exportContent(req,input.kind);
  let rows:Record<string,unknown>[]=[];
  if(input.kind==='products'){
   const first=await adminProductCatalogue(a,1,input.q,input.state,input.owner);rows=first.products as unknown as Record<string,unknown>[];

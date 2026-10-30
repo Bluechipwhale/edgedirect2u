@@ -1,0 +1,3 @@
+import {z} from 'zod';
+export const reportDatasets={payments:'Verified online payments',refunds:'Online refund requests',merchant_ledger:'Commission & merchant ledger',settlements:'Recorded external settlements',product_sales:'All product sales',merchant_sales:'All store sales',customers:'All paying customers'};
+export const reportDatasetInput=z.object({kind:z.enum(['payments','refunds','merchant_ledger','settlements','product_sales','merchant_sales','customers']),from:z.iso.date(),to:z.iso.date()}).refine(v=>v.from<=v.to&&Date.parse(v.to)-Date.parse(v.from)<=366*86400000,'Choose a period of up to 366 days');

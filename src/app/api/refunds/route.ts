@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRole,localMode,service,records } from '@/lib/server';
+import { requireRole,localMode,service } from '@/lib/server';
 import { guard,failure } from '@/lib/http';
 import { submitRefund,fetchRefund } from '@/lib/refunds';
 export async function POST(req:Request){try{
@@ -12,9 +12,9 @@ export async function POST(req:Request){try{
   if(input.action==='process'){
     const {data,error}=await db.rpc('claim_refund',{p_id:input.id});if(error)throw new Error(error.message);row=data;
   }else{
-    const record=(await records('refunds')).find(r=>r.id===input.id);if(!record||record.data.status==='requested')throw new Error('Refund not yet submitted');
-    const {data,error}=await db.from('orders').select('reference').eq('id',record.data.order_id).single();if(error)throw new Error(error.message);
-    row={amount_kobo:Number(record.data.amount_kobo),reference:data.reference,provider_reference:String(record.data.provider_reference||input.provider||'')};
+    const lookup=await db.from('refunds').select('*').eq('id',input.id).single();const record=lookup.data;if(lookup.error||!record||record.status==='requested')throw new Error('Refund not yet submitted');
+    const {data,error}=await db.from('orders').select('reference').eq('id',record.order_id).single();if(error)throw new Error(error.message);
+    row={amount_kobo:Number(record.amount_kobo),reference:data.reference,provider_reference:String(record.provider_reference||input.provider||'')};
     if(!/^[0-9]+$/.test(row.provider_reference!))throw new Error('Enter the provider refund ID from Paystack to reconcile the ambiguous request');
   }
   let refund;

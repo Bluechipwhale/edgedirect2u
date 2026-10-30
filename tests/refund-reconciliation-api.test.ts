@@ -1,0 +1,9 @@
+import {it,expect,vi,beforeEach,afterEach} from 'vitest';
+const mocks=vi.hoisted(()=>({role:vi.fn(),from:vi.fn(),rpc:vi.fn(),verify:vi.fn()}));
+vi.mock('@/lib/server',()=>({requireRole:mocks.role,localMode:async()=>false,service:()=>({from:mocks.from,rpc:mocks.rpc})}));
+vi.mock('@/lib/refunds',()=>({fetchRefund:mocks.verify,submitRefund:vi.fn()}));
+import {POST} from '@/app/api/refunds/route';
+beforeEach(()=>{vi.stubEnv('PAYSTACK_SECRET_KEY','sk_test_fixture');mocks.role.mockResolvedValue({id:'admin',role:'admin'});mocks.rpc.mockResolvedValue({error:null});mocks.from.mockImplementation((table:string)=>({select:()=>({eq:(_key:string,id:string)=>({single:async()=>({error:null,data:table==='refunds'?{id,order_id:'old-order',amount_kobo:50000,status:'processing',provider_reference:'1234'}:{reference:'edge-original-reference'}})})})}));mocks.verify.mockResolvedValue({id:'1234',amount:50000,status:'processed'});});afterEach(()=>{vi.clearAllMocks();vi.unstubAllEnvs();});
+const request=()=>new Request('https://app.example.com/api/refunds',{method:'POST',headers:{host:'app.example.com',origin:'https://app.example.com','Content-Type':'application/json'},body:JSON.stringify({action:'reconcile',id:'refund-older-than-first-100'})});
+it('loads an older refund by its exact ID and reconciles only the independently verified amount/reference',async()=>{const r=await POST(request());expect(r.status).toBe(200);expect(mocks.verify).toHaveBeenCalledWith('1234','edge-original-reference',50000);expect(mocks.rpc).toHaveBeenCalledWith('reconcile_refund',{p_id:'refund-older-than-first-100',p_provider:'1234',p_amount:50000,p_status:'processed'});});
+it('denies non-admin access before reading private refund data or contacting the provider',async()=>{mocks.role.mockRejectedValue(Error('Forbidden'));const r=await POST(request());expect(r.status).toBe(403);expect(mocks.from).not.toHaveBeenCalled();expect(mocks.verify).not.toHaveBeenCalled();});

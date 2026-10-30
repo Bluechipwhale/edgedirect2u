@@ -7,6 +7,7 @@ import { localStore } from './local-store';
 import { defaultTheme, themeSchema, type Theme } from './theme';
 import type { Actor, Category, Product, RecordRow, Order } from './types';
 import {cataloguePage,cataloguePrice} from './catalogue-query';
+import {categoryScope} from './category-tree';
 
 export function configured() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); }
 export async function supabase() {
@@ -36,15 +37,19 @@ export async function publishedTheme(): Promise<Theme> {
 export async function catalogue(query = '', category = '', sort = '', page = 1, merchant = '', min = 0, max = Number.MAX_SAFE_INTEGER, brand = '', available = false): Promise<{ products: Product[]; count: number; categories: Category[] }> {
   page=cataloguePage(page);min=cataloguePrice(min,0);max=cataloguePrice(max,Number.MAX_SAFE_INTEGER);
   if (await localMode()) {
-    const p = localStore().list<Product>('products').filter(p => p.active && (!query || `${p.name} ${p.brand}`.toLowerCase().includes(query.toLowerCase())) && (!category || p.category_id === category) && (!merchant || p.merchant_id === merchant) && p.price_kobo >= min && p.price_kobo <= max && (!brand || p.brand === brand) && (!available || p.stock > p.reserved));
+    const scope=categoryScope(localStore().list<Category>('categories'),category);
+    const p = localStore().list<Product>('products').filter(p => p.active && (!query || `${p.name} ${p.brand}`.toLowerCase().includes(query.toLowerCase())) && (!category || scope.includes(p.category_id)) && (!merchant || p.merchant_id === merchant) && p.price_kobo >= min && p.price_kobo <= max && (!brand || p.brand === brand) && (!available || p.stock > p.reserved));
     p.sort((a,b)=>(sort==='price-asc'?a.price_kobo-b.price_kobo:sort==='price-desc'?b.price_kobo-a.price_kobo:b.created_at.localeCompare(a.created_at))||a.id.localeCompare(b.id));
-    return { products: p.slice((page-1)*12, page*12), count: p.length, categories: localStore().list<Category>('categories').reverse() };
+    return { products: p.slice((page-1)*12, page*12), count: p.length, categories: localStore().list<Category>('categories').sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||a.name.localeCompare(b.name)) };
   }
   if (!configured()) return { products: [], count: 0, categories: [] };
-  const db = await supabase(); let req = db.from('products').select('*', { count: 'exact' }).eq('active', true);
-  if (query) req = req.ilike('name', `%${query.replace(/[%_]/g, '')}%`); if (category) req = req.eq('category_id', category); if (merchant) req = req.eq('merchant_id', merchant); if (brand) req = req.eq('brand', brand); req = req.gte('price_kobo', min).lte('price_kobo', max); if (available) req = req.gt('available_stock', 0);
+  const db = await supabase();
+  const scopedCategories=category?await db.from('categories').select('*').order('sort_order').order('name'):null;
+  if(scopedCategories?.error)throw new Error('Catalogue unavailable');
+  let req = db.from('products').select('*', { count: 'exact' }).eq('active', true);
+  if (query) req = req.ilike('name', `%${query.replace(/[%_]/g, '')}%`); if (category) req = req.in('category_id',categoryScope(scopedCategories?.data||[],category)); if (merchant) req = req.eq('merchant_id', merchant); if (brand) req = req.eq('brand', brand); req = req.gte('price_kobo', min).lte('price_kobo', max); if (available) req = req.gt('available_stock', 0);
   req = req.order(sort.startsWith('price') ? 'price_kobo' : 'created_at', { ascending: sort === 'price-asc' }).order('id',{ascending:true}).range((page-1)*12, page*12-1);
-  const [result, categories] = await Promise.all([req, db.from('categories').select('*').order('name')]);
+  const [result, categories] = await Promise.all([req, scopedCategories||db.from('categories').select('*').order('sort_order').order('name')]);
   let {data,count,error}=result;const cats=categories.data;
   // PostgREST returns 416 for a page beyond the filtered result set. Read the
   // same filtered query's first row to recover its count, without losing scope.

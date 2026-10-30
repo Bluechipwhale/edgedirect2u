@@ -1,0 +1,3 @@
+import {notFound} from 'next/navigation';
+import {supabase,configured} from '@/lib/server';
+export default async function Page({params}:{params:Promise<{slug:string}>}){const {slug}=await params;if(!/^[a-z0-9-]{1,100}$/.test(slug)||!configured())notFound();const {data,error}=await(await supabase()).from('content_pages').select('title,content').eq('slug',slug).eq('active',true).maybeSingle();if(error)throw Error('Page unavailable');if(!data)notFound();return <main className="container narrow-page"><h1>{data.title}</h1><div style={{whiteSpace:'pre-wrap',lineHeight:1.8}}>{data.content}</div></main>;}
