@@ -8,6 +8,7 @@ import { defaultTheme, themeSchema, type Theme } from './theme';
 import type { Actor, Category, Product, RecordRow, Order } from './types';
 import {cataloguePage,cataloguePrice} from './catalogue-query';
 import {categoryScope} from './category-tree';
+import {commercePermissions,type CommercePermission,type CommerceContext} from './commerce-permissions';
 
 export function configured() { return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY); }
 export async function supabase() {
@@ -29,6 +30,9 @@ export async function actor(required = true): Promise<Actor | null> {
   if (required) throw new Error('Authentication required'); return null;
 }
 export async function requireRole(roles: string[]) { const a = (await actor())!; if (!roles.includes(a.role)) throw new Error('Forbidden'); return a; }
+export async function commerceContext():Promise<CommerceContext>{if(await localMode())return {name:'Local administrator',permissions:Object.keys(commercePermissions) as CommercePermission[]};const r=await(await supabase()).rpc('commerce_context');if(r.error)throw Error('Staff permissions are temporarily unavailable');return r.data as CommerceContext;}
+export async function canPermission(p:CommercePermission){return (await commerceContext()).permissions.includes(p);}
+export async function requirePermission(p:CommercePermission){const a=(await actor())!;if(!await canPermission(p))throw Error('Forbidden');return a;}
 export async function publishedTheme(): Promise<Theme> {
   if (await localMode()) return themeSchema.parse(localStore().get('settings', 'published'));
   if (!configured()) return defaultTheme;
@@ -46,7 +50,7 @@ export async function catalogue(query = '', category = '', sort = '', page = 1, 
   const db = await supabase();
   const scopedCategories=category?await db.from('categories').select('*').order('sort_order').order('name'):null;
   if(scopedCategories?.error)throw new Error('Catalogue unavailable');
-  let req = db.from('products').select('*', { count: 'exact' }).eq('active', true);
+  let req = db.from('storefront_products').select('*', { count: 'exact' }).eq('active', true);
   if (query) req = req.ilike('name', `%${query.replace(/[%_]/g, '')}%`); if (category) req = req.in('category_id',categoryScope(scopedCategories?.data||[],category)); if (merchant) req = req.eq('merchant_id', merchant); if (brand) req = req.eq('brand', brand); req = req.gte('price_kobo', min).lte('price_kobo', max); if (available) req = req.gt('available_stock', 0);
   req = req.order(sort.startsWith('price') ? 'price_kobo' : 'created_at', { ascending: sort === 'price-asc' }).order('id',{ascending:true}).range((page-1)*12, page*12-1);
   const [result, categories] = await Promise.all([req, scopedCategories||db.from('categories').select('*').order('sort_order').order('name')]);
@@ -59,7 +63,7 @@ export async function catalogue(query = '', category = '', sort = '', page = 1, 
   if (error) throw new Error('Catalogue unavailable');
   return { products: (data || []) as Product[], count: count || 0, categories: (cats || []) as Category[] };
 }
-export async function product(slug: string) { if (await localMode()) return localStore().list<Product>('products').find(p => p.slug === slug && p.active); if (!configured()) return undefined; const { data } = await (await supabase()).from('products').select('*').eq('slug', slug).eq('active', true).single(); return data as Product | undefined; }
+export async function product(slug: string) { if (await localMode()) return localStore().list<Product>('products').find(p => p.slug === slug && p.active); if (!configured()) return undefined; const { data } = await (await supabase()).from('storefront_products').select('*').eq('slug', slug).eq('active', true).single(); return data as Product | undefined; }
 export async function records(kind: string,publicView=false): Promise<RecordRow[]> {
   if (await localMode()) {const rows=localStore().list<RecordRow>(kind);if(kind==='deliveries')return rows.map(r=>({...r,data:{...r.data,events:localStore().list<RecordRow>('delivery_events').filter(e=>e.data.delivery_id===r.id).reverse().map(e=>({...e.data,created_at:e.created_at}))}}));if(kind==='merchants'&&publicView)return rows.filter(r=>r.data.status==='approved').map(r=>({id:r.id,kind:r.kind,created_at:r.created_at,data:{name:r.data.name,description:r.data.description,status:r.data.status}}));return publicView?filterRecords(kind,rows):rows;}
   if (!configured()) return [];
@@ -85,7 +89,7 @@ export async function managementProducts(a:Actor,page=1){
 }
 export type ProductSearchState='all'|'active'|'draft'|'archived';
 export async function adminProductCatalogue(a:Actor,page=1,query='',state:ProductSearchState='all',owner=''){
-  if(a.role!=='admin')throw new Error('Forbidden');
+  if(a.role!=='admin')await requirePermission('catalogue.read');
   const q=query.trim().slice(0,120).toLowerCase();
   if(await localMode()){
     const all=localStore().list<Product>('products').filter(p=>

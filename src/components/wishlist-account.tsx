@@ -1,0 +1,11 @@
+'use client';
+import Link from 'next/link';
+import {useEffect,useState} from 'react';
+import {requestJson} from '@/lib/client-request';
+import {mergeAccountWishlist} from './shop-state';
+type Saved={owner:string;ids:string[];stored_count:number};
+export function WishlistAccount({ids,loading=false}:{ids:string[];loading?:boolean}){const [account,setAccount]=useState<Saved|null>(null),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+ useEffect(()=>{let current=true;fetch('/api/account-wishlist',{cache:'no-store'}).then(async r=>{if(r.status===401)return null;if(!r.ok)throw Error('Account wishlist unavailable');return r.json();}).then(r=>{if(current)setAccount(r);}).catch(()=>{if(current)setMessage('Account sync is unavailable. Your device wishlist is still here.');});return()=>{current=false;};},[]);
+ if(!account)return <section><p>These finds are saved on this device. <Link href="/login?next=/wishlist">Sign in</Link> with a confirmed account to save them across devices.</p>{message&&<p role="status">{message}</p>}</section>;
+ return <section><p>{account.stored_count} finds saved to your account. Account saving is explicit; your device list is preserved until you choose to update it.</p><div className="resource-subnav"><button className="small-button" disabled={busy||loading} onClick={async()=>{if(!window.confirm(`Replace the ${account.stored_count} account-saved finds with these ${ids.length} displayed products?`))return;setBusy(true);setMessage('');try{setAccount(await requestJson<Saved>('/api/account-wishlist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({owner:account.owner,ids})}));setMessage('Your account wishlist is saved.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to save');}finally{setBusy(false);}}}>Replace account wishlist with displayed finds</button><button className="small-button" disabled={busy} onClick={async()=>{setBusy(true);try{const fresh=await requestJson<Saved>('/api/account-wishlist',{method:'GET'});setAccount(fresh);mergeAccountWishlist(fresh.ids);setMessage('Available account finds added to this device.');}catch(e){setMessage(e instanceof Error?e.message:'Unable to load');}finally{setBusy(false);}}}>Add account finds to this device</button></div>{message&&<p role="status">{message}</p>}</section>;
+}

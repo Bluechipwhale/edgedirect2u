@@ -1,0 +1,7 @@
+import Link from 'next/link';
+import {redirect} from 'next/navigation';
+import {actor,supabase} from '@/lib/server';
+import {DeliveryFeedbackForm} from '@/components/delivery-feedback-forms';
+import type {FeedbackDelivery} from '@/lib/delivery-feedback';
+export const metadata={title:'My delivery feedback',robots:{index:false,follow:false}};
+export default async function Page({searchParams}:{searchParams:Promise<{page?:string}>}){if(!await actor(false))redirect('/login?next=/account/delivery-feedback');const p=await searchParams,page=Math.max(1,Math.min(100000,Math.floor(Number(p.page)||1))),r=await(await supabase()).rpc('my_feedback_deliveries',{p_page:page});if(r.error)return <p>Delivery feedback temporarily unavailable.</p>;const rows=r.data.rows as FeedbackDelivery[];return <main className="container narrow-page"><Link href="/account">← My account</Link><h1>Delivery feedback</h1><a href="/api/delivery-feedback/export?kind=customer">Export my delivery feedback</a>{rows.map(row=><article className="report-panel" key={row.job_id}><h2>Order {row.order_id.slice(0,8)}</h2><p>Driver: {row.driver} · {row.status||'No feedback yet'}</p><DeliveryFeedbackForm job={row.job_id} rating={row.rating} comment={row.comment}/></article>)}{!rows.length&&<p>Your delivered, verified paid orders will appear here.</p>}<div className="pagination">{page>1&&<Link href={`?page=${page-1}`}>Previous</Link>}<span>{r.data.count} eligible deliveries</span>{page*50<r.data.count&&<Link href={`?page=${page+1}`}>Next</Link>}</div></main>;}

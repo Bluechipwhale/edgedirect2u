@@ -1,0 +1,4 @@
+import {z} from 'zod';
+export const dealInput=z.object({id:z.uuid(),product:z.string().min(1).max(100),kind:z.enum(['flash','day','featured']),title:z.string().trim().min(2).max(100),price:z.number().int().positive().max(1_000_000_000),start:z.iso.datetime({offset:true}),end:z.iso.datetime({offset:true}),active:z.boolean()}).strict();
+export type Deal={id:string;product_id:string;kind:'flash'|'day'|'featured';title:string;price_kobo:number;starts_at:string;ends_at:string;active:boolean;updated_at:string};
+export function nairaPrice(value:string){if(!/^\d{1,8}(\.\d{1,2})?$/.test(value))throw Error('Enter a price in Naira with at most two decimal places');const [n,f='']=value.split('.');const result=Number(n)*100+Number(f.padEnd(2,'0'));if(result<1||result>1_000_000_000)throw Error('Enter a valid price');return result;}

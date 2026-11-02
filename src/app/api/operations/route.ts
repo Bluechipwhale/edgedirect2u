@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireRole,localMode,supabase,actor,orders,records } from '@/lib/server';
+import { requireRole,requirePermission,localMode,supabase,actor,orders,records } from '@/lib/server';
 import { localStore } from '@/lib/local-store';
 import { guard,failure } from '@/lib/http';
 import type { Order } from '@/lib/types';
@@ -13,8 +13,8 @@ export async function POST(req:Request){try{guard(req);const input=z.discriminat
   z.object({action:z.literal('order_stage'),id:z.uuid(),status:z.enum(['packaging','cancelled']),note:z.string().trim().min(3).max(500)}),
   z.object({action:z.literal('refund'),id:z.string(),amount:z.number().int().positive()}),
 ]).parse(await req.json());const a=(await actor())!;const local=await localMode();
-  if(input.action==='threshold'){await requireRole(['admin','operations']);if(local)throw new Error('Reorder levels require the connected database');const {error}=await(await supabase()).rpc('set_reorder_level',{p_product:input.product_id,p_level:input.level});if(error)throw new Error(error.message);}
-  if(input.action==='stock'){await requireRole(['admin','operations','merchant']);if(local)localStore().adjustStock(a,input.product_id,input.quantity,input.reason);else{const {error}=await(await supabase()).rpc('adjust_stock',{p_product:input.product_id,p_quantity:input.quantity,p_reason:input.reason});if(error)throw new Error(error.message);}}
+  if(input.action==='threshold'){await requirePermission('inventory.adjust');if(local)throw new Error('Reorder levels require the connected database');const {error}=await(await supabase()).rpc('set_reorder_level',{p_product:input.product_id,p_level:input.level});if(error)throw new Error(error.message);}
+  if(input.action==='stock'){if(a.role!=='merchant')await requirePermission('inventory.adjust');if(local)localStore().adjustStock(a,input.product_id,input.quantity,input.reason);else{const {error}=await(await supabase()).rpc('adjust_stock',{p_product:input.product_id,p_quantity:input.quantity,p_reason:input.reason});if(error)throw new Error(error.message);}}
   if(input.action==='dispatch'){await requireRole(['admin','operations']);const o=(await orders(a)).find(o=>o.id===input.order_id);if(!o||o.payment_status!=='paid'||o.status!=='ready_for_dispatch')throw new Error('Only paid, ready orders may be assigned');const driver=(await records('drivers')).find(d=>d.data.user_id===input.driver_id&&d.data.available);if(!driver)throw new Error('Select an available driver');if(local){const store=localStore();store.transaction(()=>{if(store.list<{data:Record<string,unknown>}>('deliveries').some(d=>d.data.order_id===o.id))throw new Error('Order already dispatched');store.record('deliveries',{order_id:o.id,driver_id:input.driver_id,status:'assigned',address:o.address});store.audit(a,'delivery.assigned',{order_id:o.id,driver_id:input.driver_id});});}else{const {error}=await(await supabase()).rpc('assign_delivery',{p_order:o.id,p_driver:input.driver_id});if(error)throw new Error(error.message);}}
   if(input.action==='delivery'){await requireRole(['admin','operations','driver']);if(local)localStore().delivery(a,input.id,input.status,input.note,input.proof);else{const {error}=await(await supabase()).rpc('update_delivery',{p_id:input.id,p_status:input.status,p_note:input.note,p_proof:input.proof});if(error)throw new Error(error.message);}}
   if(input.action==='order_stage'){await requireRole(['admin','operations']);if(local)throw new Error('Detailed order queues require the connected database');const {error}=await(await supabase()).rpc('set_order_workflow',{p_order:input.id,p_stage:input.status,p_note:input.note});if(error)throw new Error(error.message);}

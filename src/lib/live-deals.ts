@@ -1,0 +1,5 @@
+import 'server-only';
+import {configured,supabase} from './server';
+import type {Product} from './types';
+export type DealPlacement={kind:string;title:string;products:Product[]};
+export async function liveDealPlacements():Promise<DealPlacement[]>{if(!configured())return [];const db=await supabase(),now=new Date().toISOString();return Promise.all([['flash','Flash finds.'],['day','Today’s extra value.'],['featured','The featured deals edit.']].map(async([kind,title])=>{const d=await db.from('product_deals').select('product_id,price_kobo').eq('active',true).eq('kind',kind).lte('starts_at',now).gt('ends_at',now).order('ends_at').order('id').limit(4);if(d.error)throw Error('Current offers unavailable');const ids=(d.data||[]).map(v=>v.product_id);if(!ids.length)return {kind,title,products:[]};const p=await db.from('storefront_products').select('*').eq('active',true).in('id',ids);if(p.error)throw Error('Current offers unavailable');const byId=new Map((p.data||[]).map(v=>[v.id,v as Product]));return {kind,title,products:(d.data||[]).flatMap(d=>{const v=byId.get(d.product_id);return v&&v.price_kobo===d.price_kobo&&d.price_kobo<(v.regular_price_kobo||0)?[v]:[];})};}));}

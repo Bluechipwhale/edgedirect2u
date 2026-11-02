@@ -1,0 +1,5 @@
+import {NextResponse} from 'next/server';
+import {z} from 'zod';
+import {actor,supabase} from '@/lib/server';
+import {guard,failure} from '@/lib/http';
+export async function POST(req:Request){try{guard(req);await actor();const raw=await req.text();if(raw.length>6000)throw Error('Request too large');const input=z.discriminatedUnion('action',[z.object({action:z.literal('submit'),job:z.string().min(1).max(100),rating:z.number().int().min(1).max(5),comment:z.string().trim().min(3).max(1000)}).strict(),z.object({action:z.literal('moderate'),id:z.uuid(),status:z.enum(['pending','published','rejected'])}).strict()]).parse(JSON.parse(raw)),db=await supabase();const r=input.action==='submit'?await db.rpc('save_delivery_feedback',{p_job:input.job,p_rating:input.rating,p_comment:input.comment}):await db.rpc('moderate_delivery_feedback',{p_id:input.id,p_status:input.status});if(r.error)throw Error(r.error.message);return NextResponse.json({ok:true},{headers:{'Cache-Control':'private, no-store'}});}catch(e){return failure(e);}}

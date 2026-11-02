@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import {actor,supabase} from '@/lib/server';
+import {actor,supabase,canPermission} from '@/lib/server';
 import {redirect} from 'next/navigation';
 import {SupportReply} from './support-forms';
 import type {SupportTicket,SupportMessage} from '@/lib/support';
 export async function SupportInbox({admin=false,page=1,status='',ticket=''}:{admin?:boolean;page?:number;status?:string;ticket?:string}){
- const a=await actor(false);if(!a)redirect('/login?next='+encodeURIComponent(admin?'/admin/support':'/support'));const staff=['admin','operations'].includes(a.role);if(admin&&!staff)return <p>Staff access required.</p>;
+ const a=await actor(false);if(!a)redirect('/login?next='+encodeURIComponent(admin?'/admin/support':'/support'));const staff=await canPermission('support.manage');if(admin&&!staff)return <p>Staff access required.</p>;
  const base=admin?'/admin/support':'/support';const db=await supabase();
  if(ticket){if(!/^[0-9a-f-]{36}$/i.test(ticket))return <p>Invalid ticket reference.</p>;const {data,error}=await db.rpc('support_thread',{p_id:ticket,p_page:page});if(error)return <><p>This request is unavailable or you do not have access.</p><Link href={base}>Back to inbox</Link></>;
   const t=data.ticket as SupportTicket,m=data.messages as SupportMessage[];return <><Link href={base}>← Inbox</Link><h1>{t.subject}</h1><p>{t.name} · {t.email} · {t.status.replaceAll('_',' ')}</p><a href={`${base}/export?ticket=${t.id}`}>Export conversation</a>{m.map(x=><article className="report-panel" key={x.id}><strong>{x.staff?'Support team':'Customer'}</strong><small> · {new Date(x.created_at).toLocaleString('en-NG',{timeZone:'Africa/Lagos'})}</small><p style={{whiteSpace:'pre-wrap'}}>{x.body}</p></article>)}<div className="pagination">{page>1&&<Link href={`${base}?ticket=${t.id}&page=${page-1}`}>Previous replies</Link>}<span>{data.count} messages · Page {page}</span>{page*50<data.count&&<Link href={`${base}?ticket=${t.id}&page=${page+1}`}>More replies</Link>}</div><SupportReply ticket={t.id} status={t.status} staff={staff}/></>;

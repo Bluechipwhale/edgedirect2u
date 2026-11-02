@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { supabase,configured } from '@/lib/server';
+import { supabase,configured,commerceContext } from '@/lib/server';
 import { BusinessPortal } from '@/components/business-portal';
 import type { BusinessContext,BusinessReport,BusinessTeam } from '@/lib/business';
 export const metadata={title:'Staff & client portal',robots:{index:false,follow:false}};
@@ -9,6 +9,7 @@ export default async function Page({searchParams}:{searchParams:Promise<{from?:s
   const db=await supabase();const {data:{user}}=await db.auth.getUser();if(!user||user.is_anonymous)redirect('/login?next=/staff');
   const {data:context,error}=await db.rpc('business_context');
   if(error)throw new Error('Staff access is temporarily unavailable. Please try again.');
+  if(!context&&(await commerceContext()).permissions.length)redirect('/admin');
   if(!context)return <main className="container narrow-page"><span className="eyebrow">STAFF & CLIENT PORTAL</span><h1>Your access needs approval.</h1><p>Use the work email approved by your administrator. Confirm its email and sign in again after access is approved.</p><div className="profile-links"><Link href="/account/profile">Switch account or sign out</Link><Link href="/">Visit the customer storefront</Link></div></main>;
   const params=await searchParams;
   const today=new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Lagos'});
