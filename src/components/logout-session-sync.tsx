@@ -1,0 +1,4 @@
+'use client';
+import {useEffect} from 'react';
+import {logoutEventKey} from './logout-button';
+export function LogoutSessionSync(){useEffect(()=>{function marker(){try{return localStorage.getItem(logoutEventKey);}catch{return null;}}const initialMarker=marker();function leaveAccount(){try{sessionStorage.removeItem('edge-checkout-intent');}catch{}window.location.replace('/login?logged_out=1');}function signedOut(event:StorageEvent){if(event.key===logoutEventKey&&event.newValue)leaveAccount();}function restored(event:PageTransitionEvent){const current=marker();if(event.persisted&&current&&current!==initialMarker)leaveAccount();}window.addEventListener('storage',signedOut);window.addEventListener('pageshow',restored);return()=>{window.removeEventListener('storage',signedOut);window.removeEventListener('pageshow',restored);};},[]);return null;}

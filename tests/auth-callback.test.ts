@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, it, expect, vi } from 'vitest';
 const auth = vi.hoisted(() => ({
   resetPasswordForEmail:vi.fn(), getUser:vi.fn(), setSession:vi.fn(),
-  exchangeCodeForSession:vi.fn(), verifyOtp:vi.fn(), updateUser:vi.fn(),
+  exchangeCodeForSession:vi.fn(), verifyOtp:vi.fn(), updateUser:vi.fn(),signOut:vi.fn(),
 }));
 vi.mock('../src/lib/server', () => ({ configured:()=>true, supabase:async()=>({auth}) }));
 import { POST } from '../src/app/api/auth/route';
@@ -10,6 +10,15 @@ beforeEach(()=>vi.resetAllMocks());
 afterEach(()=>vi.unstubAllEnvs());
 const origin='https://edgedirect2u.vercel.app';
 const request=(body:unknown)=>new Request(`${origin}/api/auth`,{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
+
+it('signs out only this browser session and prevents caching the logout response',async()=>{
+  auth.signOut.mockResolvedValue({error:null});const response=await POST(request({action:'logout'}));
+  expect(response.status).toBe(200);expect(auth.signOut).toHaveBeenCalledWith({scope:'local'});expect(await response.json()).toEqual({ok:true});expect(response.headers.get('cache-control')).toContain('no-store');
+});
+it('rejects cross-origin logout and keeps failures visible',async()=>{
+  const response=await POST(new Request(`${origin}/api/auth`,{method:'POST',headers:{origin:'https://other.example','Content-Type':'application/json'},body:JSON.stringify({action:'logout'})}));expect(response.status).toBe(400);expect(auth.signOut).not.toHaveBeenCalled();
+  auth.signOut.mockResolvedValue({error:{message:'Network unavailable'}});const failed=await POST(request({action:'logout'}));expect(failed.status).toBe(400);expect((await failed.json()).error).toContain('Unable to sign out');
+});
 
 it('sends recovery back to the origin where the request and PKCE cookies were created',async()=>{
   auth.resetPasswordForEmail.mockResolvedValue({error:null});

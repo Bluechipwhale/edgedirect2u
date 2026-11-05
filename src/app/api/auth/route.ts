@@ -11,9 +11,9 @@ export async function POST(req: Request) {
     const input = authInput.parse(JSON.parse(body));
     const db = await supabase();
     if (input.action === 'logout') {
-      const { error } = await db.auth.signOut();
+      const { error } = await db.auth.signOut({ scope: 'local' });
       if (error) throw new Error('Unable to sign out. Please try again.');
-      return NextResponse.json({ ok: true });
+      return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'private, no-store' } });
     }
     // guard() verified this origin. Keep PKCE cookies and the callback on the
     // same deployment, even while a custom domain is still being connected.
