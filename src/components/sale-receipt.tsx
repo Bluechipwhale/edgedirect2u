@@ -10,6 +10,7 @@ function date(value:string){
  }).format(parsed)+' WAT';
 }
 const methods={cash:'Cash',bank_transfer:'Bank transfer',paystack:'Paystack'};
+const statuses:Record<string,string>={paid:'Paid',reserved:'Awaiting payment',cancelled:'Cancelled',expired:'Expired',refunded:'Refunded'};
 
 /** Presentation only: payment and refund evidence always comes from the recorded subledger. */
 export function SaleReceipt({sale}:{sale:PosSale}){
@@ -19,7 +20,7 @@ export function SaleReceipt({sale}:{sale:PosSale}){
  const paid=Boolean(receipt)&&['paid','refunded'].includes(sale.status);
  const title=paid?'Sales receipt':sale.status==='reserved'?'Sale reservation':'Sale summary';
  const status=refunded>0&&paid?(sale.status==='refunded'?'Refunded':'Partially refunded'):
-  ({paid:'Paid',reserved:'Awaiting payment',cancelled:'Cancelled',expired:'Expired',refunded:'Refunded'}[sale.status]||sale.status);
+  (statuses[sale.status]||sale.status);
  return <article className={styles.paper} aria-label={title}>
   <header className={styles.header}>
    <div><Image className={styles.logo} src="/brand/e-edge-direct-2u-official.png" alt="E-Edge Direct 2U" width={280} height={74} unoptimized loading="eager"/><p className={styles.brandNote}>COUNTER SALES · EDGEDIRECT2U.COM</p></div>
